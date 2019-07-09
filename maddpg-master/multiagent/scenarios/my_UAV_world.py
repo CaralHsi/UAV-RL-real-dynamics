@@ -1,9 +1,8 @@
 import numpy as np
-from multiagent.core import World, Agent, Landmark
+from multiagent.core_UAV import World, Agent, Landmark
 from multiagent.scenario import BaseScenario
-# 有大有小 禁飞区
-# 不相互重叠
-# 最小空隙
+
+# hard constraints for dynamic and no-flying-zone
 
 
 class Scenario(BaseScenario):
@@ -12,7 +11,7 @@ class Scenario(BaseScenario):
         # set any world properties first
         world.dim_c = 2
         num_agents = 1
-        num_landmarks = 20
+        num_landmarks = 2
         world.observing_range = 0.7
         world.min_corridor = 0.06
         world.collaborative = True
@@ -20,16 +19,18 @@ class Scenario(BaseScenario):
         world.agents = [Agent() for _ in range(num_agents)]
         for i, agent in enumerate(world.agents):
             agent.name = 'agent %d' % i
+            agent.type = 'UAV'
             agent.collide = True
             agent.silent = True
             agent.size = 0.03
+            agent.done = False
         # add landmarks
         world.landmarks = [Landmark() for _ in range(num_landmarks)]
         for i, landmark in enumerate(world.landmarks):
             landmark.name = 'landmark %d' % i
             landmark.collide = False
             landmark.movable = False
-            landmark.size = np.random.uniform(0.1, 0.2)
+            landmark.size = np.random.uniform(0.3, 0.5)
             if i == (len(world.landmarks) - 1):
                 landmark.size = 0.03
         # make initial conditions
@@ -48,11 +49,16 @@ class Scenario(BaseScenario):
                 landmark.color = np.array([0.25, 0.25, 0.25])
         # set random initial states
         for agent in world.agents:
+            # initialize x and y
             agent.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
-            agent.state.p_vel = np.zeros(world.dim_p)
+            # initialize v
+            agent.state.p_vel = np.zeros(1)  # because the velocity is along the flying direction
+            # initialize theta
+            agent.state.theta = np.random.uniform(-np.pi, np.pi, 1)
             agent.state.c = np.zeros(world.dim_c)
+            agent.done = False
         for i, landmark in enumerate(world.landmarks):
-            flag = 1
+            flag = 1  # to set landmarks separately
             while flag:
                 landmark.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
                 temp1 = []
@@ -84,7 +90,6 @@ class Scenario(BaseScenario):
                     collisions += 1
         return (rew, collisions, min_dists, occupied_landmarks)
 
-
     def is_collision(self, agent1, agent2):
         delta_pos = agent1.state.p_pos - agent2.state.p_pos
         dist = np.sqrt(np.sum(np.square(delta_pos)))
@@ -96,47 +101,50 @@ class Scenario(BaseScenario):
         rew = 0
         l = world.landmarks[-1]
         dists = [np.sqrt(np.sum(np.square(a.state.p_pos - l.state.p_pos))) for a in world.agents]
-        if min(dists) < l.size:
-            rew += 1
-        else:
-            rew -= min(dists)
+        '''else:'''
+        rew -= min(dists)
+        '''if min(dists) <= (agent.size + l.size)/2:
+            rew += 4'''
+
         '''for l in world.landmarks:
             dists = [np.sqrt(np.sum(np.square(a.state.p_pos - l.state.p_pos))) for a in world.agents]
             rew -= min(dists)'''
         if agent.collide:
             for a in world.landmarks[0:-1]:
                 if self.is_collision(a, agent):
-                    rew -= 5
+                    rew -= 3.5
+        constraint_force = np.sum(np.square(agent.state.p_vel) + np.square(agent.state.theta))
+        '''if constraint_force > 0.7:
+            rew -= 0.5'''
         return rew
 
     def observation(self, agent, world):
         # get positions of all entities in this agent's reference frame
         entity_pos_temp = []
-        min_observable_landmark = np.min([3, len(world.landmarks)])
+        min_observable_landmark = np.min([5, len(world.landmarks)])
         for entity in world.landmarks:  # world.entities:
             distance = np.sqrt(np.sum(np.square([entity.state.p_pos - agent.state.p_pos])))
             if distance < world.observing_range and (not entity == world.landmarks[-1]):
                 entity_pos_temp.append([np.append(entity.state.p_pos - agent.state.p_pos, entity.size), distance])
         entity_pos_temp.sort(key=lambda pos: pos[1])
         entity_pos_temp = entity_pos_temp[0:min_observable_landmark]
-        entity_pos = [entity_pos_temp[i][0] for i in range(len(entity_pos_temp))]  # position
+        '''entity_pos = [entity_pos_temp[i][0] for i in range(len(entity_pos_temp))]  # position
         for i in range(len(entity_pos_temp), min_observable_landmark):
-            entity_pos.append([-1, -1, -1])
+            entity_pos.append([-1, -1, -1])'''
+
         # target obs
+        entity_pos = []
         target = world.landmarks[-1]
         entity_pos.append(np.append(target.state.p_pos - agent.state.p_pos, target.size))
 
+        temp = np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + entity_pos)
+        temp = np.append(temp, agent.state.theta)
+        return temp
 
+    def done(self, agent, world):
+        target_landmark = world.landmarks[-1]
+        dis = np.sqrt(np.sum(np.square(agent.state.p_pos - target_landmark.state.p_pos)))
+        if dis <= agent.size + target_landmark.size:
+            return True
+        return False
 
-        # entity colors
-        entity_color = []
-        for entity in world.landmarks:  # world.entities:
-            entity_color.append(entity.color)
-        # communication of all other agents
-        comm = []
-        other_pos = []
-        for other in world.agents:
-            if other is agent: continue
-            comm.append(other.state.c)
-            other_pos.append(other.state.p_pos - agent.state.p_pos)
-        return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + entity_pos + other_pos + comm)

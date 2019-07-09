@@ -5,22 +5,29 @@ from tensorflow.python.ops import math_ops
 from multiagent.multi_discrete import MultiDiscrete
 from tensorflow.python.ops import nn
 
+
 class Pd(object):
     """
     A particular probability distribution
     """
     def flatparam(self):
         raise NotImplementedError
+
     def mode(self):
         raise NotImplementedError
+
     def logp(self, x):
         raise NotImplementedError
+
     def kl(self, other):
         raise NotImplementedError
+
     def entropy(self):
         raise NotImplementedError
+
     def sample(self):
         raise NotImplementedError
+
 
 class PdType(object):
     """
@@ -28,97 +35,133 @@ class PdType(object):
     """
     def pdclass(self):
         raise NotImplementedError
+
     def pdfromflat(self, flat):
         return self.pdclass()(flat)
+
     def param_shape(self):
         raise NotImplementedError
+
     def sample_shape(self):
         raise NotImplementedError
+
     def sample_dtype(self):
         raise NotImplementedError
 
     def param_placeholder(self, prepend_shape, name=None):
         return tf.placeholder(dtype=tf.float32, shape=prepend_shape+self.param_shape(), name=name)
+
     def sample_placeholder(self, prepend_shape, name=None):
         return tf.placeholder(dtype=self.sample_dtype(), shape=prepend_shape+self.sample_shape(), name=name)
+
 
 class CategoricalPdType(PdType):
     def __init__(self, ncat):
         self.ncat = ncat
+
     def pdclass(self):
         return CategoricalPd
+
     def param_shape(self):
         return [self.ncat]
+
     def sample_shape(self):
         return []
+
     def sample_dtype(self):
         return tf.int32
+
 
 class SoftCategoricalPdType(PdType):
     def __init__(self, ncat):
         self.ncat = ncat
+
     def pdclass(self):
         return SoftCategoricalPd
+
     def param_shape(self):
         return [self.ncat]
+
     def sample_shape(self):
         return [self.ncat]
+
     def sample_dtype(self):
         return tf.float32
+
 
 class MultiCategoricalPdType(PdType):
     def __init__(self, low, high):
         self.low = low
         self.high = high
         self.ncats = high - low + 1
+
     def pdclass(self):
         return MultiCategoricalPd
     def pdfromflat(self, flat):
         return MultiCategoricalPd(self.low, self.high, flat)
+
     def param_shape(self):
         return [sum(self.ncats)]
+
     def sample_shape(self):
         return [len(self.ncats)]
+
     def sample_dtype(self):
         return tf.int32
+
 
 class SoftMultiCategoricalPdType(PdType):
     def __init__(self, low, high):
         self.low = low
         self.high = high
         self.ncats = high - low + 1
+
     def pdclass(self):
         return SoftMultiCategoricalPd
+
     def pdfromflat(self, flat):
         return SoftMultiCategoricalPd(self.low, self.high, flat)
+
     def param_shape(self):
         return [sum(self.ncats)]
+
     def sample_shape(self):
         return [sum(self.ncats)]
+
     def sample_dtype(self):
         return tf.float32
+
 
 class DiagGaussianPdType(PdType):
     def __init__(self, size):
         self.size = size
+
     def pdclass(self):
         return DiagGaussianPd
+
     def param_shape(self):
         return [2*self.size]
+
     def sample_shape(self):
         return [self.size]
+
     def sample_dtype(self):
         return tf.float32
+
 
 class BernoulliPdType(PdType):
     def __init__(self, size):
         self.size = size
+
     def pdclass(self):
         return BernoulliPd
+
     def param_shape(self):
         return [self.size]
+
     def sample_shape(self):
         return [self.size]
+
     def sample_dtype(self):
         return tf.int32
 
