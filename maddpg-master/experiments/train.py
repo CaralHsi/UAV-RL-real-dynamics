@@ -6,10 +6,14 @@ import pickle
 import sys
 sys.path.append('../')
 
+# keras_version=='2.2.4'
+# tensorflow_version=='1.13.1'
+
 
 import maddpg.common.tf_util as U
 from maddpg.trainer.maddpg import MADDPGAgentTrainer
 import tensorflow.contrib.layers as layers
+from safety_layer.safety_layer import SafetyLayer
 
 def parse_args():
     parser = argparse.ArgumentParser("Reinforcement Learning experiments for multiagent environments")
@@ -25,6 +29,7 @@ def parse_args():
     parser.add_argument("--gamma", type=float, default=0.95, help="discount factor")
     parser.add_argument("--batch-size", type=int, default=1024, help="number of episodes to optimize at the same time")
     parser.add_argument("--num-units", type=int, default=64, help="number of units in the mlp")
+    parser.add_argument("--use-safety-layer", action="store_true", default=True)
     # Checkpointing
     parser.add_argument("--exp-name", type=str, default=None, help="name of the experiment")
     parser.add_argument("--save-dir", type=str, default="./ckpt_my_UAV_world_1_landmarks/test.ckpt", help="directory in which training state and model should be saved")
@@ -32,12 +37,13 @@ def parse_args():
     parser.add_argument("--load-dir", type=str, default="", help="directory in which training state and model are loaded")
     # Evaluation
     parser.add_argument("--restore", action="store_true", default=False)
-    parser.add_argument("--display", action="store_true", default=True)
+    parser.add_argument("--display", action="store_true", default=False)
     parser.add_argument("--benchmark", action="store_true", default=False)
     parser.add_argument("--benchmark-iters", type=int, default=100000, help="number of iterations run for benchmarking")
     parser.add_argument("--benchmark-dir", type=str, default="./benchmark_files/", help="directory where benchmark data is saved")
     parser.add_argument("--plots-dir", type=str, default="./learning_curves/", help="directory where plot data is saved")
     return parser.parse_args()
+
 
 def mlp_model(input, num_outputs, scope, reuse=False, num_units=64, rnn_cell=None):
     # This model takes as input an observation and returns values of all actions
@@ -47,6 +53,16 @@ def mlp_model(input, num_outputs, scope, reuse=False, num_units=64, rnn_cell=Non
         out = layers.fully_connected(out, num_outputs=num_units, activation_fn=tf.nn.relu)
         out = layers.fully_connected(out, num_outputs=num_outputs, activation_fn=None)
         return out
+
+def mlp_model_safety_layer(input, num_outputs, scope, reuse=False, num_units=10, rnn_cell=None):
+    # This model takes as input an observation and returns values of all actions
+    with tf.variable_scope(scope, reuse=reuse):
+        out = input
+        out = layers.fully_connected(out, num_outputs=num_units, activation_fn=tf.nn.relu)
+        out = layers.fully_connected(out, num_outputs=num_units, activation_fn=tf.nn.relu)
+        out = layers.fully_connected(out, num_outputs=num_outputs, activation_fn=None)
+        return out
+
 
 def make_env(scenario_name, arglist, benchmark=False):
     from multiagent.environment import MultiAgentEnv
@@ -60,21 +76,23 @@ def make_env(scenario_name, arglist, benchmark=False):
     if benchmark:
         env = MultiAgentEnv(world, scenario.reset_world, scenario.reward, scenario.observation, scenario.benchmark_data)
     else:
-        env = MultiAgentEnv(world, scenario.reset_world, scenario.reward, scenario.observation, done_callback=scenario.done)
+        env = MultiAgentEnv(world, scenario.reset_world, scenario.reward, scenario.observation,
+                            done_callback=scenario.done, constraint_value_callback=scenario.constraints_value)
     return env
 
-def get_trainers(env, num_adversaries, obs_shape_n, arglist):
+
+def get_trainers(env, num_adversaries, obs_shape_n, arglist, safety_layer=None):
     trainers = []
     model = mlp_model
     trainer = MADDPGAgentTrainer
     for i in range(num_adversaries):
         trainers.append(trainer(
             "agent_%d" % i, model, obs_shape_n, env.action_space, i, arglist,
-            local_q_func=(arglist.adv_policy=='ddpg')))
+            local_q_func=(arglist.adv_policy == 'ddpg'), safety_layer=safety_layer))
     for i in range(num_adversaries, env.n):
         trainers.append(trainer(
             "agent_%d" % i, model, obs_shape_n, env.action_space, i, arglist,
-            local_q_func=(arglist.good_policy=='ddpg')))
+            local_q_func=(arglist.good_policy == 'ddpg'), safety_layer=safety_layer))
     return trainers
 
 
@@ -82,11 +100,22 @@ def train(arglist):
     with U.single_threaded_session():
         # Create environment
         env = make_env(arglist.scenario, arglist, arglist.benchmark)
+        obs_n = env.reset()
         # Create agent trainers
         obs_shape_n = [env.observation_space[i].shape for i in range(env.n)]
         num_adversaries = min(env.n, arglist.num_adversaries)
         trainers = get_trainers(env, num_adversaries, obs_shape_n, arglist)
         print('Using good policy {} and adv policy {}'.format(arglist.good_policy, arglist.adv_policy))
+        # Pretrain the safety_layer
+        safety_layer = None
+        if arglist.use_safety_layer:
+            safety_layer = SafetyLayer(env, len(env.world.landmarks) - 1, mlp_model_safety_layer,
+                                       env.observation_space[0].shape,
+                                       env.action_space, trainers[0].action)
+            safety_layer.train()
+
+        # set safety_layer for trainer[0]
+        trainers[0].set_safety_layer(safety_layer)
 
         # Initialize
         U.initialize()
@@ -104,15 +133,16 @@ def train(arglist):
         final_ep_ag_rewards = []  # agent rewards for training curve
         agent_info = [[[]]]  # placeholder for benchmarking info
         saver = tf.train.Saver()
-        obs_n = env.reset()
         episode_step = 0
         train_step = 0
         t_start = time.time()
 
         print('Starting iterations...')
         while True:
+            # get constraint_values
+            c_n = env.get_constraint_values()
             # get action
-            action_n = [agent.action(obs) for agent, obs in zip(trainers,obs_n)]
+            action_n = [agent.action(obs, c) for agent, obs, c in zip(trainers, obs_n, c_n)]
             # environment step
             new_obs_n, rew_n, done_n, info_n = env.step(action_n)
             episode_step += 1

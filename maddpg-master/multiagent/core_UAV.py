@@ -174,6 +174,15 @@ class World(object):
             + entity.state.theta * p_force_agent[i][1] <= (0.7 - np.square(entity.state.p_vel)
                                                            - np.square(entity.state.theta))/(2 * self.dt)
             '''
+            '''if (p_force_agent is not None):
+                entity.state.p_vel += (p_force_agent[i] / entity.mass) * self.dt
+            if entity.max_speed is not None:
+                speed = np.sqrt(np.square(entity.state.p_vel[0]) + np.square(entity.state.p_vel[1]))  # current vel
+                if speed > entity.max_speed:  # project to the max_speed with the same proportion
+                    entity.state.p_vel = entity.state.p_vel / np.sqrt(np.square(entity.state.p_vel[0]) +
+                                                                  np.square(entity.state.p_vel[1])) * entity.max_speed
+            entity.state.p_pos += entity.state.p_vel * self.dt  # after determine the speed, update the pos
+'''
             entity.state.p_vel += (p_force_agent[i][0] / entity.mass) * self.dt
             entity.state.theta += p_force_agent[i][1] * self.dt
             if entity.max_speed is not None:
@@ -184,6 +193,7 @@ class World(object):
             # after determine the speed, update the pos
             entity.state.p_pos[0] += entity.state.p_vel * np.cos(entity.state.theta) * self.dt
             entity.state.p_pos[1] += entity.state.p_vel * np.sin(entity.state.theta) * self.dt
+            
 
     def update_agent_state(self, agent):
         # set communication state (directly for now)

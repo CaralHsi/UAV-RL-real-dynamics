@@ -137,7 +137,8 @@ class Scenario(BaseScenario):
         target = world.landmarks[-1]
         entity_pos.append(np.append(target.state.p_pos - agent.state.p_pos, target.size))
 
-        temp = np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + entity_pos)
+        temp = np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.theta]
+                              + entity_pos)
         temp = np.append(temp, agent.state.theta)
         return temp
 
@@ -147,4 +148,11 @@ class Scenario(BaseScenario):
         if dis <= agent.size + target_landmark.size:
             return True
         return False
+
+    def constraints_value(self, agent, world):
+        constraints = []
+        for i, landmark in enumerate(world.landmarks[0:-1]):
+            constraints.append(-np.sum(np.square(agent.state.p_pos - landmark.state.p_pos)) +
+                               np.square(landmark.size))
+        return constraints
 

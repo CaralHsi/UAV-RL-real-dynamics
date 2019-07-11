@@ -25,6 +25,7 @@ def make_update_exp(vals, target_vals):
     expression = tf.group(*expression)
     return U.function([], [], updates=[expression])
 
+
 def p_train(make_obs_ph_n, act_space_n, p_index, p_func, q_func, optimizer, grad_norm_clipping=None, local_q_func=False, num_units=64, scope="trainer", reuse=None):
     with tf.variable_scope(scope, reuse=reuse):
         # create distribtuions
@@ -109,16 +110,17 @@ def q_train(make_obs_ph_n, act_space_n, q_index, q_func, optimizer, grad_norm_cl
 
         return train, update_target_q, {'q_values': q_values, 'target_q_values': target_q_values}
 
+
 class MADDPGAgentTrainer(AgentTrainer):
-    def __init__(self, name, model, obs_shape_n, act_space_n, agent_index, args, local_q_func=False):
+    def __init__(self, name, model, obs_shape_n, act_space_n, agent_index, args, safety_layer=None, local_q_func=False):
         self.name = name
         self.n = len(obs_shape_n)
         self.agent_index = agent_index
         self.args = args
+        self.safety_layer = safety_layer
         obs_ph_n = []
         for i in range(self.n):
             obs_ph_n.append(U.BatchInput(obs_shape_n[i], name="observation"+str(i)).get())
-
         # Create all the functions necessary to train the model
         self.q_train, self.q_update, self.q_debug = q_train(
             scope=self.name,
@@ -148,8 +150,14 @@ class MADDPGAgentTrainer(AgentTrainer):
         self.max_replay_buffer_len = args.batch_size * args.max_episode_len
         self.replay_sample_index = None
 
-    def action(self, obs):
-        return self.act(obs[None])[0]
+    def action(self, obs, c=None):
+        action = self.act(obs[None])[0]
+        if self.safety_layer and c is not None:
+            action = self.safety_layer.get_safe_action(obs, action, c)
+        return action
+
+    def set_safety_layer(self, safety_layer):
+        self.safety_layer = safety_layer
 
     def experience(self, obs, act, rew, new_obs, done, terminal):
         # Store transition in the replay buffer.

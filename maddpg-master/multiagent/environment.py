@@ -3,6 +3,7 @@ from gym import spaces
 from gym.envs.registration import EnvSpec
 import numpy as np
 from multiagent.multi_discrete import MultiDiscrete
+from multiagent.Box import Box
 
 # environment for all agents in the multiagent world
 # currently code assumes that no agents will be created/destroyed at runtime!
@@ -13,7 +14,7 @@ class MultiAgentEnv(gym.Env):
 
     def __init__(self, world, reset_callback=None, reward_callback=None,
                  observation_callback=None, info_callback=None,
-                 done_callback=None, shared_viewer=True):
+                 done_callback=None, shared_viewer=True, constraint_value_callback=None):
 
         self.world = world
         self.agents = self.world.policy_agents
@@ -25,6 +26,7 @@ class MultiAgentEnv(gym.Env):
         self.observation_callback = observation_callback
         self.info_callback = info_callback
         self.done_callback = done_callback
+        self.constraint_value_callback = constraint_value_callback
         # environment parameters
         self.discrete_action_space = True
         # if true, action is a number 0...N, otherwise action is a one-hot N-dimensional vector
@@ -77,6 +79,12 @@ class MultiAgentEnv(gym.Env):
             self.viewers = [None] * self.n
         self._reset_render()
 
+    def get_constraint_values(self):
+        c_n = []
+        for agent in self.agents:
+            c_n.append(self._get_constraint_value(agent))
+        return c_n
+
     def step(self, action_n):
         obs_n = []
         reward_n = []
@@ -127,6 +135,12 @@ class MultiAgentEnv(gym.Env):
             return np.zeros(0)
         return self.observation_callback(agent, self.world)
 
+    # get constraint values for a particular agent
+    def _get_constraint_value(self, agent):
+        if self.constraint_value_callback is None:
+            return 0.0
+        return self.constraint_value_callback(agent, self.world)
+
     # get dones for a particular agent
     # unused right now -- agents are allowed to go beyond the viewing screen
     def _get_done(self, agent):
@@ -145,7 +159,9 @@ class MultiAgentEnv(gym.Env):
         agent.action.u = np.zeros(self.world.dim_p)
         agent.action.c = np.zeros(self.world.dim_c)
         # process action
-        if isinstance(action_space, MultiDiscrete):
+        if isinstance(action_space, spaces.Box):
+            action = [action]
+        elif isinstance(action_space, MultiDiscrete):
             act = []
             size = action_space.high - action_space.low + 1
             index = 0
@@ -175,7 +191,7 @@ class MultiAgentEnv(gym.Env):
                     agent.action.u[1] += action[0][3] - action[0][4]
                 else:
                     agent.action.u = action[0]
-            sensitivity = 3
+            sensitivity = 1
             if agent.accel is not None:
                 sensitivity = agent.accel
             agent.action.u *= sensitivity
