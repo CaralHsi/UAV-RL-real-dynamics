@@ -183,14 +183,14 @@ class SafetyLayer:
         g = [x.data.numpy().reshape(-1) for x in g]
         multipliers = [(np.dot(g_i, action) + c_i) / np.dot(g_i, g_i) for g_i, c_i in zip(g, c)]
         multipliers = [np.clip(x, 0, np.inf) for x in multipliers]
-        new_obs_n, rew_n, done_n, info_n = env.step([action])
+        '''new_obs_n, rew_n, done_n, info_n = env.step([action])
         c_next = env.get_constraint_values()
-        c_next_prediction = (np.dot(g[0], action) + c[0])
+        c_next_prediction = (np.dot(g[0], action) + c[0])'''
 
         # Calculate correction
         correction = np.max(multipliers) * g[np.argmax(multipliers)]
 
-        action_new = action - correction * 0.1
+        action_new = action - correction * 0.0
 
         return action_new
 

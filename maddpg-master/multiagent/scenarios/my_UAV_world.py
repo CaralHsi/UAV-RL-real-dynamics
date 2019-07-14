@@ -52,7 +52,7 @@ class Scenario(BaseScenario):
             # initialize x and y
             agent.state.p_pos = np.squeeze(np.array([np.random.uniform(-1, -0.9, 1), np.random.uniform(-0.1, +0.1, 1)]))
             # initialize v
-            agent.state.p_vel = np.array([0.6])  # np.zeros(1)  # because the velocity is along the flying direction
+            agent.state.p_vel = np.array([0.9])  # np.zeros(1)  # because the velocity is along the flying direction
             # initialize theta
             agent.state.theta = np.random.uniform(-np.pi/3, np.pi/3, 1)
             agent.state.c = np.zeros(world.dim_c)
