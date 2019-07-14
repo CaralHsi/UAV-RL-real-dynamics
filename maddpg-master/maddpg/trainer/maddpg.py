@@ -150,11 +150,19 @@ class MADDPGAgentTrainer(AgentTrainer):
         self.max_replay_buffer_len = args.batch_size * args.max_episode_len
         self.replay_sample_index = None
 
-    def action(self, obs, c=None):
+    def action(self, obs, c=None, env=None):
         action = self.act(obs[None])[0]
-        if self.safety_layer and c is not None:
-            action = self.safety_layer.get_safe_action(obs, action, c)
+        if self.safety_layer and c is not None and env is not None:
+            action = self.safety_layer.get_safe_action(obs, action, c, env)
         return action
+
+    def action_real(self, obs, c=None, env=None):
+        action = self.act(obs[None])[0]
+        action_real = action
+        if self.safety_layer and c is not None and env is not None:
+            action = self.safety_layer.get_safe_action(obs, action, c, env)
+
+        return action_real, action
 
     def set_safety_layer(self, safety_layer):
         self.safety_layer = safety_layer

@@ -31,7 +31,7 @@ class Entity(object):
         # name 
         self.name = ''
         # properties:
-        self.size = 0.050
+        self.size = 0.035
         # entity can move / be pushed
         self.movable = False
         # entity collides with others
@@ -93,7 +93,7 @@ class World(object):
         # color dimensionality
         self.dim_color = 3
         # simulation timestep
-        self.dt = 0.08
+        self.dt = 0.08  # used to be 0.08
         # physical damping 物理阻尼
         self.damping = 0.25
         # contact response parameters
@@ -182,18 +182,20 @@ class World(object):
                     entity.state.p_vel = entity.state.p_vel / np.sqrt(np.square(entity.state.p_vel[0]) +
                                                                   np.square(entity.state.p_vel[1])) * entity.max_speed
             entity.state.p_pos += entity.state.p_vel * self.dt  # after determine the speed, update the pos
-'''
-            entity.state.p_vel += (p_force_agent[i][0] / entity.mass) * self.dt
+            '''
+            '''entity.state.p_vel += (p_force_agent[i][0] / entity.mass) * self.dt
+            '''
             entity.state.theta += p_force_agent[i][1] * self.dt
-            if entity.max_speed is not None:
+            '''if entity.max_speed is not None:
                 speed = np.sqrt(np.square(entity.state.p_vel[0]) + np.square(entity.state.p_vel[1]))  # current vel
                 if speed > entity.max_speed:  # project to the max_speed with the same proportion
                     entity.state.p_vel = entity.state.p_vel / np.sqrt(np.square(entity.state.p_vel[0]) +
                                                                   np.square(entity.state.p_vel[1])) * entity.max_speed
+            '''
             # after determine the speed, update the pos
             entity.state.p_pos[0] += entity.state.p_vel * np.cos(entity.state.theta) * self.dt
             entity.state.p_pos[1] += entity.state.p_vel * np.sin(entity.state.theta) * self.dt
-            
+
 
     def update_agent_state(self, agent):
         # set communication state (directly for now)

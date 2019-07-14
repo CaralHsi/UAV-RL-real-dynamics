@@ -11,7 +11,7 @@ class Scenario(BaseScenario):
         # set any world properties first
         world.dim_c = 2
         num_agents = 1
-        num_landmarks = 2
+        num_landmarks = 4
         world.observing_range = 0.7
         world.min_corridor = 0.06
         world.collaborative = True
@@ -50,24 +50,31 @@ class Scenario(BaseScenario):
         # set random initial states
         for agent in world.agents:
             # initialize x and y
-            agent.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
+            agent.state.p_pos = np.squeeze(np.array([np.random.uniform(-1, -0.9, 1), np.random.uniform(-0.1, +0.1, 1)]))
             # initialize v
-            agent.state.p_vel = np.zeros(1)  # because the velocity is along the flying direction
+            agent.state.p_vel = np.array([0.6])  # np.zeros(1)  # because the velocity is along the flying direction
             # initialize theta
-            agent.state.theta = np.random.uniform(-np.pi, np.pi, 1)
+            agent.state.theta = np.random.uniform(-np.pi/3, np.pi/3, 1)
             agent.state.c = np.zeros(world.dim_c)
             agent.done = False
-        for i, landmark in enumerate(world.landmarks):
+        landmark = world.landmarks[-1]
+        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(0.9, +1, 1), np.random.uniform(-0.1, +0.1, 1)]))
+        landmark.state.p_vel = np.zeros(world.dim_p)
+        for i, landmark in enumerate(world.landmarks[0:-1]):
             flag = 1  # to set landmarks separately
             while flag:
-                landmark.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
+                landmark.state.p_pos = np.random.uniform(-1, +0.9, world.dim_p)
                 temp1 = []
                 temp2 = []
                 temp1.append(np.sqrt(np.sum(np.square(world.agents[0].state.p_pos - landmark.state.p_pos))))
                 temp2.append(world.agents[0].size + landmark.size + world.min_corridor)
-                for j in range(0, i):
-                    temp1.append(np.sqrt(np.sum(np.square(world.landmarks[j].state.p_pos - landmark.state.p_pos))))
-                    temp2.append(world.landmarks[j].size + landmark.size + world.min_corridor)
+                for j in range(0, i+1):
+                    if j == i:
+                        j_ = -1
+                    else:
+                        j_ = j
+                    temp1.append(np.sqrt(np.sum(np.square(world.landmarks[j_].state.p_pos - landmark.state.p_pos))))
+                    temp2.append(world.landmarks[j_].size + landmark.size + world.min_corridor)
                 if min(np.array(temp1) - np.array(temp2)) > 0:
                     flag = 0
             landmark.state.p_vel = np.zeros(world.dim_p)
@@ -98,24 +105,13 @@ class Scenario(BaseScenario):
 
     def reward(self, agent, world):
         # Agents are rewarded based on minimum agent distance to each landmark, penalized for collisions
-        rew = 0
         l = world.landmarks[-1]
-        dists = [np.sqrt(np.sum(np.square(a.state.p_pos - l.state.p_pos))) for a in world.agents]
-        '''else:'''
-        rew -= min(dists)
-        '''if min(dists) <= (agent.size + l.size)/2:
-            rew += 4'''
-
-        '''for l in world.landmarks:
-            dists = [np.sqrt(np.sum(np.square(a.state.p_pos - l.state.p_pos))) for a in world.agents]
-            rew -= min(dists)'''
+        dist = np.sqrt(np.sum(np.square(agent.state.p_pos - l.state.p_pos)))
+        rew = -dist
         if agent.collide:
             for a in world.landmarks[0:-1]:
                 if self.is_collision(a, agent):
-                    rew -= 3.5
-        constraint_force = np.sum(np.square(agent.state.p_vel) + np.square(agent.state.theta))
-        '''if constraint_force > 0.7:
-            rew -= 0.5'''
+                    rew -= 5
         return rew
 
     def observation(self, agent, world):
@@ -124,22 +120,20 @@ class Scenario(BaseScenario):
         min_observable_landmark = np.min([5, len(world.landmarks)])
         for entity in world.landmarks:  # world.entities:
             distance = np.sqrt(np.sum(np.square([entity.state.p_pos - agent.state.p_pos])))
-            if distance < world.observing_range and (not entity == world.landmarks[-1]):
-                entity_pos_temp.append([np.append(entity.state.p_pos - agent.state.p_pos, entity.size), distance])
+            '''if distance < world.observing_range and (not entity == world.landmarks[-1]):'''
+            entity_pos_temp.append([np.append(entity.state.p_pos - agent.state.p_pos, entity.size), distance])
         entity_pos_temp.sort(key=lambda pos: pos[1])
         entity_pos_temp = entity_pos_temp[0:min_observable_landmark]
-        '''entity_pos = [entity_pos_temp[i][0] for i in range(len(entity_pos_temp))]  # position
+        entity_pos = [entity_pos_temp[i][0] for i in range(len(entity_pos_temp))]  # position
         for i in range(len(entity_pos_temp), min_observable_landmark):
-            entity_pos.append([-1, -1, -1])'''
+            entity_pos.append([-1, -1, -1])
 
         # target obs
-        entity_pos = []
         target = world.landmarks[-1]
         entity_pos.append(np.append(target.state.p_pos - agent.state.p_pos, target.size))
 
         temp = np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.theta]
                               + entity_pos)
-        temp = np.append(temp, agent.state.theta)
         return temp
 
     def done(self, agent, world):
@@ -152,7 +146,7 @@ class Scenario(BaseScenario):
     def constraints_value(self, agent, world):
         constraints = []
         for i, landmark in enumerate(world.landmarks[0:-1]):
-            constraints.append(-np.sum(np.square(agent.state.p_pos - landmark.state.p_pos)) +
-                               np.square(landmark.size))
+            constraints.append((-np.sum(np.square(agent.state.p_pos - landmark.state.p_pos)) +
+                               np.square(landmark.size) + 0.07) * 10)
         return constraints
 

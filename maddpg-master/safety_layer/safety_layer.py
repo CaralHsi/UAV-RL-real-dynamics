@@ -60,9 +60,9 @@ class SafetyLayer:
         self.num_constraints = num_constraints  # = num_landmarks - 1 because the last landmark is the target
         self.max_episode_length = 300
         self.batch_size = 256
-        self.lr = 0.1
+        self.lr = 0.007
         self.steps_per_epoch = 6000
-        self.epochs = 10
+        self.epochs = 20
         self.evaluation_steps = 1500
         self.replay_buffer_size = 1000000
         self.num_units = 10
@@ -174,7 +174,7 @@ class SafetyLayer:
         print(f"Validation completed, average loss {losses}")
 
 
-    def get_safe_action(self, observation, action, c):
+    def get_safe_action(self, observation, action, c, env):
         self._eval_mode()
         g = [x(self._as_tensor(observation).view(1, -1)) for x in self._models]
         self._train_mode()
@@ -183,11 +183,14 @@ class SafetyLayer:
         g = [x.data.numpy().reshape(-1) for x in g]
         multipliers = [(np.dot(g_i, action) + c_i) / np.dot(g_i, g_i) for g_i, c_i in zip(g, c)]
         multipliers = [np.clip(x, 0, np.inf) for x in multipliers]
+        new_obs_n, rew_n, done_n, info_n = env.step([action])
+        c_next = env.get_constraint_values()
+        c_next_prediction = (np.dot(g[0], action) + c[0])
 
         # Calculate correction
         correction = np.max(multipliers) * g[np.argmax(multipliers)]
 
-        action_new = action - correction
+        action_new = action - correction * 0.1
 
         return action_new
 
