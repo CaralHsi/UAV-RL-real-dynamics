@@ -11,7 +11,7 @@ class Scenario(BaseScenario):
         # set any world properties first
         world.dim_c = 2
         num_agents = 1
-        num_landmarks = 4
+        num_landmarks = 6
         world.observing_range = 0.7
         world.min_corridor = 0.06
         world.collaborative = True
@@ -30,7 +30,7 @@ class Scenario(BaseScenario):
             landmark.name = 'landmark %d' % i
             landmark.collide = False
             landmark.movable = False
-            landmark.size = np.random.uniform(0.3, 0.5)
+            landmark.size = np.random.uniform(0.2, 0.35)
             if i == (len(world.landmarks) - 1):
                 landmark.size = 0.03
         # make initial conditions
@@ -111,7 +111,7 @@ class Scenario(BaseScenario):
         if agent.collide:
             for a in world.landmarks[0:-1]:
                 if self.is_collision(a, agent):
-                    rew -= 5
+                    rew -= 3
         return rew
 
     def observation(self, agent, world):
