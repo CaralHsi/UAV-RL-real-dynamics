@@ -36,7 +36,7 @@ def parse_args():
     parser.add_argument("--save-rate", type=int, default=1000, help="save model once every time this many episodes are completed")
     parser.add_argument("--load-dir", type=str, default="", help="directory in which training state and model are loaded")
     # Evaluation
-    parser.add_argument("--restore", action="store_true", default=False)
+    parser.add_argument("--restore", action="store_true", default=True)
     parser.add_argument("--display", action="store_true", default=True)
     parser.add_argument("--benchmark", action="store_true", default=False)
     parser.add_argument("--benchmark-iters", type=int, default=100000, help="number of iterations run for benchmarking")
@@ -77,7 +77,8 @@ def make_env(scenario_name, arglist, benchmark=False):
         env = MultiAgentEnv(world, scenario.reset_world, scenario.reward, scenario.observation, scenario.benchmark_data)
     else:
         env = MultiAgentEnv(world, scenario.reset_world, scenario.reward, scenario.observation,
-                            done_callback=scenario.done, constraint_value_callback=scenario.constraints_value)
+                            done_callback=scenario.done, constraint_value_callback=scenario.constraints_value,
+                            is_any_collision_callback=scenario.is_any_collision)
     return env
 
 
@@ -135,12 +136,16 @@ def train(arglist):
         saver = tf.train.Saver()
         episode_step = 0
         train_step = 0
+        cumulative_constraint_violations = 0
         t_start = time.time()
 
         print('Starting iterations...')
         while True:
             # get constraint_values
             c_n = env.get_constraint_values()
+            is_any_collision = env.is_any_collision()
+            if is_any_collision[0]:
+                cumulative_constraint_violations = cumulative_constraint_violations + 1
             '''if c_n[0][0] > 0:
                 print("there is a c_n > 0")'''
             # get action

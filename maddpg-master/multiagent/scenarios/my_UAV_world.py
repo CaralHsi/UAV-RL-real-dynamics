@@ -147,6 +147,15 @@ class Scenario(BaseScenario):
         constraints = []
         for i, landmark in enumerate(world.landmarks[0:-1]):
             constraints.append((-np.sum(np.square(agent.state.p_pos - landmark.state.p_pos)) +
-                               np.square(landmark.size) + 0.07) * 10)
+                               np.square(landmark.size + agent.size) + 0.07) * 10)
         return constraints
+
+    def is_any_collision(self, agent, world):
+        for i, landmark in enumerate(world.landmarks[0:-1]):
+            dist = np.sqrt(np.sum(np.square(agent.state.p_pos - landmark.state.p_pos))) \
+                   - (agent.size + landmark.size)
+            if dist <= 0:
+                return True
+        return False
+
 
