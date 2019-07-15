@@ -62,7 +62,7 @@ class SafetyLayer:
         self.batch_size = 256
         self.lr = 0.007
         self.steps_per_epoch = 6000
-        self.epochs = 20
+        self.epochs = 1
         self.evaluation_steps = 1500
         self.replay_buffer_size = 1000000
         self.num_units = 10
