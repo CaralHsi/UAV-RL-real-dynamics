@@ -13,7 +13,7 @@ class Scenario(BaseScenario):
         num_agents = 1
         num_landmarks = 6
         world.observing_range = 0.7
-        world.min_corridor = 0.06
+        world.min_corridor = 0.15
         world.collaborative = True
         # add agents
         world.agents = [Agent() for _ in range(num_agents)]
@@ -52,7 +52,7 @@ class Scenario(BaseScenario):
             # initialize x and y
             agent.state.p_pos = np.squeeze(np.array([np.random.uniform(-1, -0.9, 1), np.random.uniform(-0.1, +0.1, 1)]))
             # initialize v
-            agent.state.p_vel = np.array([0.6])  # np.zeros(1)  # because the velocity is along the flying direction
+            agent.state.p_vel = np.array([0.9])  # np.zeros(1)  # because the velocity is along the flying direction
             # initialize theta
             agent.state.theta = np.random.uniform(-np.pi/3, np.pi/3, 1)
             agent.state.c = np.zeros(world.dim_c)
@@ -147,7 +147,7 @@ class Scenario(BaseScenario):
         constraints = []
         for i, landmark in enumerate(world.landmarks[0:-1]):
             constraints.append((-np.sum(np.square(agent.state.p_pos - landmark.state.p_pos)) +
-                               np.square(landmark.size + agent.size) + 0.07) * 10)
+                               np.square(landmark.size + agent.size) + 0.03) * 10)
         return constraints
 
     def is_any_collision(self, agent, world):

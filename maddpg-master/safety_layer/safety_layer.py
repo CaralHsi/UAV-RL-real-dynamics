@@ -62,7 +62,7 @@ class SafetyLayer:
         self.batch_size = 256
         self.lr = 0.007
         self.steps_per_epoch = 6000
-        self.epochs = 1
+        self.epochs = 5
         self.evaluation_steps = 1500
         self.replay_buffer_size = 1000000
         self.num_units = 10
@@ -185,12 +185,13 @@ class SafetyLayer:
         multipliers = [np.clip(x, 0, np.inf) for x in multipliers]
         '''new_obs_n, rew_n, done_n, info_n = env.step([action])
         c_next = env.get_constraint_values()
-        c_next_prediction = (np.dot(g[0], action) + c[0])'''
+        temp = [(np.dot(g_i, action) + c_i) for g_i, c_i in zip(g, c)]'''
 
         # Calculate correction
         correction = np.max(multipliers) * g[np.argmax(multipliers)]
 
         action_new = action - correction * 0.0
+        multipliers_new = [(np.dot(g_i, action_new) + c_i) / np.dot(g_i, g_i) for g_i, c_i in zip(g, c)]
 
         return action_new
 

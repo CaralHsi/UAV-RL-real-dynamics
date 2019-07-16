@@ -5,7 +5,7 @@ from safety_layer.net import Net
 
 class ConstraintModel(Net):
     def __init__(self, observation_dim, action_dim):
-        self.layers = [10, 10]
+        self.layers = [20, 20, 20]
         self.init_bound = 0.03
         
         super(ConstraintModel, self)\
