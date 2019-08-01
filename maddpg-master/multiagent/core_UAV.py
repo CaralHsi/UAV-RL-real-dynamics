@@ -12,6 +12,8 @@ class EntityState(object):
 class AgentState(EntityState):
     def __init__(self):
         super(AgentState, self).__init__()
+        # omega
+        self.omega = None
         # theta
         self.theta = None
         # communication utterance
@@ -185,7 +187,8 @@ class World(object):
             '''
             '''entity.state.p_vel += (p_force_agent[i][0] / entity.mass) * self.dt
             '''
-            entity.state.theta += p_force_agent[i][1] * self.dt
+            entity.state.omega += p_force_agent[i][1] * self.dt
+            entity.state.theta += entity.state.omega * self.dt
             '''if entity.max_speed is not None:
                 speed = np.sqrt(np.square(entity.state.p_vel[0]) + np.square(entity.state.p_vel[1]))  # current vel
                 if speed > entity.max_speed:  # project to the max_speed with the same proportion

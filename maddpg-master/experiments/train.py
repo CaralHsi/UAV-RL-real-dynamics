@@ -38,7 +38,7 @@ def parse_args():
     parser.add_argument("--good-policy", type=str, default="maddpg", help="policy for good agents")
     parser.add_argument("--adv-policy", type=str, default="maddpg", help="policy of adversaries")
     # Core training parameters
-    parser.add_argument("--lr", type=float, default=0.1 * 1e-2, help="learning rate for Adam optimizer")
+    parser.add_argument("--lr", type=float, default=0.07 * 1e-2, help="learning rate for Adam optimizer")
     parser.add_argument("--gamma", type=float, default=0.95, help="discount factor")
     parser.add_argument("--batch-size", type=int, default=1024, help="number of episodes to optimize at the same time")
     parser.add_argument("--num-units", type=int, default=64, help="number of units in the mlp")
@@ -50,7 +50,7 @@ def parse_args():
     parser.add_argument("--load-dir", type=str, default="", help="directory in which training state and model are loaded")
     # Evaluation
     parser.add_argument("--restore", action="store_true", default=True)
-    parser.add_argument("--display", action="store_true", default=True)
+    parser.add_argument("--display", action="store_true", default=False)
     parser.add_argument("--benchmark", action="store_true", default=False)
     parser.add_argument("--benchmark-iters", type=int, default=100000, help="number of iterations run for benchmarking")
     parser.add_argument("--benchmark-dir", type=str, default="./benchmark_files/", help="directory where benchmark data is saved")
@@ -188,13 +188,14 @@ def train(arglist):
                 np.savetxt("data_save.txt", data_save)  # 缺省按照'%.18e'格式保存数据，以空格分隔
 
                 # plot x, y, v, theta
-                a = data_save
+                '''a = data_save
                 V = a[:, 0]
                 x = a[:, 1]
                 y = a[:, 2]
                 theta = a[:, 3]
-                action_n = a[:, 25] - a[:, 26]
-                action_real = a[:, 30] - a[:, 31]
+                omega = a[:, 4]
+                action_n = a[:, 26] - a[:, 27]
+                action_real = a[:, 31] - a[:, 32]
                 fig, ax = plt.subplots(ncols=2, nrows=2)
                 for i, landmark in enumerate(env.world.landmarks):
                     p_pos = landmark.state.p_pos
@@ -208,9 +209,11 @@ def train(arglist):
                 ax[0, 0].axis('equal')
                 ax[0, 1].plot(theta)
                 ax[0, 1].set_title("theta")
-                ax[1, 0].plot(action_n * 0.24)
+                ax[1, 0].plot(omega)
                 ax[1, 0].set_title("omega")
-                plt.show()
+                ax[1, 1].plot(action_n * 0.18)
+                ax[1, 1].set_title("action_n")
+                plt.show()'''
 
                 # reset and continue
                 data_save = []

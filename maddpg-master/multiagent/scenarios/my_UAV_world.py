@@ -55,6 +55,7 @@ class Scenario(BaseScenario):
             agent.state.p_vel = np.array([0.048])  # np.zeros(1)  # because the velocity is along the flying direction
             # initialize theta
             agent.state.theta = np.random.uniform(-np.pi/3, np.pi/3, 1)
+            agent.state.omega = np.array([0.0])
             agent.state.c = np.zeros(world.dim_c)
             agent.done = False
         landmark = world.landmarks[-1]
@@ -139,7 +140,7 @@ class Scenario(BaseScenario):
         target = world.landmarks[-1]
         entity_pos.append(np.append(target.state.p_pos - agent.state.p_pos, target.size))
 
-        temp = np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.theta]
+        temp = np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.state.theta] + [agent.state.omega]
                               + entity_pos)
         return temp
 
