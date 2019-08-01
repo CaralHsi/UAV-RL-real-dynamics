@@ -18,6 +18,7 @@ class MultiAgentEnv(gym.Env):
 
         self.world = world
         self.agents = self.world.policy_agents
+        self.action_last = [np.array([0, 0, 0, 0, 0])]
         # set required vectorized gym env property
         self.n = len(world.policy_agents)
         # scenario callbacks
@@ -104,13 +105,14 @@ class MultiAgentEnv(gym.Env):
         # advance world state
         self.world.step()
         # record observation for each agent
-        for agent in self.agents:
+        for i, agent in enumerate(self.agents):
             obs_n.append(self._get_obs(agent))
-            reward_n.append(self._get_reward(agent))
+            reward_n.append(self._get_reward(agent, self.action_last[i], action_n[i]))
             done_n.append(self._get_done(agent))
 
             info_n['n'].append(self._get_info(agent))
 
+        self.action_last = action_n
         # all agents get total reward in cooperative case
         reward = np.sum(reward_n)
         if self.shared_reward:
@@ -123,6 +125,8 @@ class MultiAgentEnv(gym.Env):
         self.reset_callback(self.world)
         # reset renderer
         self._reset_render()
+        # reset first action_last
+        self.action_last = [np.array([0, 0, 0, 0, 0])]
         # record observations for each agent
         obs_n = []
         self.agents = self.world.policy_agents
@@ -161,10 +165,10 @@ class MultiAgentEnv(gym.Env):
         return self.done_callback(agent, self.world)
 
     # get reward for a particular agent
-    def _get_reward(self, agent):
+    def _get_reward(self, agent, action_last, action):
         if self.reward_callback is None:
             return 0.0
-        return self.reward_callback(agent, self.world)
+        return self.reward_callback(agent, self.world, action_last, action)
 
     # set env action for a particular agent
     def _set_action(self, action, agent, action_space, time=None):
@@ -199,11 +203,12 @@ class MultiAgentEnv(gym.Env):
                     action[0][:] = 0.0
                     action[0][d] = 1.0
                 if self.discrete_action_space:
-                    agent.action.u[0] += action[0][1] - action[0][2]
+                    agent.action.u[0] += action[0][0]
                     agent.action.u[1] += action[0][3] - action[0][4]
+
                 else:
                     agent.action.u = action[0]
-            sensitivity = 2
+            sensitivity = 0.24
             if agent.accel is not None:
                 sensitivity = agent.accel
             agent.action.u *= sensitivity

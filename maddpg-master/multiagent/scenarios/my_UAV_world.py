@@ -11,9 +11,9 @@ class Scenario(BaseScenario):
         # set any world properties first
         world.dim_c = 2
         num_agents = 1
-        num_landmarks = 6
+        num_landmarks = 10
         world.observing_range = 0.7
-        world.min_corridor = 0.15
+        world.min_corridor = 0.06
         world.collaborative = True
         # add agents
         world.agents = [Agent() for _ in range(num_agents)]
@@ -30,9 +30,9 @@ class Scenario(BaseScenario):
             landmark.name = 'landmark %d' % i
             landmark.collide = False
             landmark.movable = False
-            landmark.size = np.random.uniform(0.2, 0.35)
+            landmark.size = np.random.uniform(0.20, 0.25)
             if i == (len(world.landmarks) - 1):
-                landmark.size = 0.03
+                landmark.size = 0.04
         # make initial conditions
         self.reset_world(world)
         return world
@@ -52,7 +52,7 @@ class Scenario(BaseScenario):
             # initialize x and y
             agent.state.p_pos = np.squeeze(np.array([np.random.uniform(-1, -0.9, 1), np.random.uniform(-0.1, +0.1, 1)]))
             # initialize v
-            agent.state.p_vel = np.array([0.9])  # np.zeros(1)  # because the velocity is along the flying direction
+            agent.state.p_vel = np.array([0.048])  # np.zeros(1)  # because the velocity is along the flying direction
             # initialize theta
             agent.state.theta = np.random.uniform(-np.pi/3, np.pi/3, 1)
             agent.state.c = np.zeros(world.dim_c)
@@ -103,11 +103,18 @@ class Scenario(BaseScenario):
         dist_min = agent1.size + agent2.size
         return True if dist < dist_min else False
 
-    def reward(self, agent, world):
+    def reward(self, agent, world, action_last, action):
         # Agents are rewarded based on minimum agent distance to each landmark, penalized for collisions
         l = world.landmarks[-1]
         dist = np.sqrt(np.sum(np.square(agent.state.p_pos - l.state.p_pos)))
         rew = -dist
+
+        # action diff punishment
+        omega_last = action_last[3] - action_last[4]
+        omega = action[3] - action[4]
+        rew -= np.square(omega_last - omega)
+
+        # collision punishment
         if agent.collide:
             for a in world.landmarks[0:-1]:
                 if self.is_collision(a, agent):
@@ -120,8 +127,8 @@ class Scenario(BaseScenario):
         min_observable_landmark = np.min([5, len(world.landmarks)])
         for entity in world.landmarks:  # world.entities:
             distance = np.sqrt(np.sum(np.square([entity.state.p_pos - agent.state.p_pos])))
-            '''if distance < world.observing_range and (not entity == world.landmarks[-1]):'''
-            entity_pos_temp.append([np.append(entity.state.p_pos - agent.state.p_pos, entity.size), distance])
+            if distance < world.observing_range and (not entity == world.landmarks[-1]):
+                entity_pos_temp.append([np.append(entity.state.p_pos - agent.state.p_pos, entity.size), distance])
         entity_pos_temp.sort(key=lambda pos: pos[1])
         entity_pos_temp = entity_pos_temp[0:min_observable_landmark]
         entity_pos = [entity_pos_temp[i][0] for i in range(len(entity_pos_temp))]  # position
@@ -147,7 +154,7 @@ class Scenario(BaseScenario):
         constraints = []
         for i, landmark in enumerate(world.landmarks[0:-1]):
             constraints.append((-np.sum(np.square(agent.state.p_pos - landmark.state.p_pos)) +
-                               np.square(landmark.size + agent.size) + 0.03) * 10)
+                               np.square(landmark.size + agent.size + 0.01)) * 10)
         return constraints
 
     def is_any_collision(self, agent, world):

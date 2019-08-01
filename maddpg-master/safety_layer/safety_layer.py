@@ -3,6 +3,8 @@ import random
 import tensorflow as tf
 import maddpg.common.tf_util as U
 import torch
+import mosek
+import sys
 
 from maddpg.common.distributions import make_pdtype
 from maddpg import AgentTrainer
@@ -11,6 +13,15 @@ from torch.optim import Adam
 from safety_layer.constraint_model import ConstraintModel
 from safety_layer.list import for_each
 
+
+# Since the actual value of Infinity is ignores, we define it solely
+# for symbolic purposes:
+inf = 1
+
+# Define a stream printer to grab output from MOSEK
+def streamprinter(text):
+    sys.stdout.write(text)
+    sys.stdout.flush()
 
 
 def c_next(make_obs_ph, act_space, c_ph, c_next_func, num_constraints,
@@ -62,7 +73,7 @@ class SafetyLayer:
         self.batch_size = 256
         self.lr = 0.007
         self.steps_per_epoch = 6000
-        self.epochs = 5
+        self.epochs = 10
         self.evaluation_steps = 1500
         self.replay_buffer_size = 1000000
         self.num_units = 10
@@ -87,7 +98,7 @@ class SafetyLayer:
 
     def _initialize_constraint_models(self):
         self._models = [ConstraintModel(self._env.observation_space[0].shape[0],
-                                        5) \
+                                        1) \
                         for _ in range(self.num_constraints)]
         self._optimizers = [Adam(x.parameters(), lr=self.lr) for x in self._models]
 
@@ -111,12 +122,13 @@ class SafetyLayer:
             # action = [np.array([1, 2, 3, 4, 5])]
             # action = [self._env.action_space[0].sample()]
             action = [self.action(observation[0])]
+            action_omega = [action[0][3] - action[0][4]]
             c = self._env.get_constraint_values()
             observation_next, _, done, _ = self._env.step(action)
             c_next = self._env.get_constraint_values()
 
             # store the replay
-            self._experience(action, observation, c, c_next)
+            self._experience(action_omega, observation, c, c_next)
 
             # update obs
             observation = observation_next
@@ -128,7 +140,7 @@ class SafetyLayer:
 
     def _evaluate_batch(self, batch):
         observation = self._as_tensor(batch["observation"])
-        action = self._as_tensor(batch["action"])
+        action_omega = self._as_tensor(batch["action"])
         c = self._as_tensor(batch["c"])
         c_next = self._as_tensor(batch["c_next"])
 
@@ -137,7 +149,7 @@ class SafetyLayer:
         # temp2 = action.view(action.shape[0], -1, 1)
 
         c_next_predicted = [c[:, i] + \
-                            torch.bmm(x.view(x.shape[0], 1, -1), action.view(action.shape[0], -1, 1)).view(-1) \
+                            torch.bmm(x.view(x.shape[0], 1, -1), action_omega.view(action_omega.shape[0], -1, 1)).view(-1) \
                             for i, x in enumerate(gs)]
         losses = [torch.mean((c_next[:, i] - c_next_predicted[i]) ** 2) for i in range(self.num_constraints)]
 
@@ -173,27 +185,174 @@ class SafetyLayer:
 
         print(f"Validation completed, average loss {losses}")
 
+    def get_safe_action(self, observation, action, environment):
+        flag = True
+        for i, landmark in enumerate(environment.world.landmarks[0:-1]):
+            dist = np.sqrt(np.sum(np.square(environment.world.policy_agents[0].state.p_pos - landmark.state.p_pos))) \
+                   - (environment.world.policy_agents[0].size + landmark.size) - 0.035
+            if dist <= 0:
+                x0 = landmark.state.p_pos[0]
+                y0 = landmark.state.p_pos[1]
+                landmark0 = landmark
+                flag = False
+                break
+        if flag:
+            return action
+        x = observation[1]
+        y = observation[2]
+        V = observation[0]
+        theta = observation[3]
+        # print(theta)
+        action_omega = action[3] - action[4]
+        dt = environment.world.dt
+        a1 = x + V * np.cos(theta) * dt + theta * V * np.sin(theta) * dt
+        b1 = - V * np.sin(theta) * dt
+        a2 = y + V * np.sin(theta) * dt - theta * V * np.cos(theta) * dt
+        b2 = V * np.cos(theta) * dt
+        c1 = a1 + b1 * theta
+        d1 = b1 * dt
+        c2 = a2 + b2 * theta
+        d2 = b2 * dt
+        e1 = -2 * x * c1
+        f1 = -2 * x * d1
+        e2 = -2 * y * c2
+        f2 = -2 * y * d2
+        g = d1 * d1 + d2 * d2
+        h = 2 * c1 * d1 + 2 * c2 * d2 + f1 + f2
+        i = c1 * c1 + c2 * c2 + e1 + e2 + np.square(landmark0.state.p_pos[0]) + \
+            np.square(landmark0.state.p_pos[1])
+        lower_c = np.square(landmark0.size + 0.01)
+        upper_c = inf
+        A = landmark0.state.p_pos[0] - x
+        B = landmark0.state.p_pos[1] - y
+        C = - (landmark0.state.p_pos[0]) * x \
+            + np.square(x) \
+            - (landmark0.state.p_pos[1]) * y \
+            + np.square(y)
 
-    def get_safe_action(self, observation, action, c, env):
+
+
+        # Make a MOSEK environment
+        with mosek.Env() as env:
+            # Attach a printer to the environment
+            # env.set_Stream(mosek.streamtype.log, streamprinter)
+
+            # Create a task
+            with env.Task(0, 0) as task:
+                # task.set_Stream(mosek.streamtype.log, streamprinter)
+                # Set up and input bounds and linear coefficients
+                bkc = [mosek.boundkey.up]
+                blc = [-inf]
+                buc = [- C - A * c1 - B * c2]
+                numvar = 1
+                bkx = [mosek.boundkey.fr] * numvar
+                blx = [-inf] * numvar
+                bux = [inf] * numvar
+                c = [- 2.0/0.24 * action_omega]
+                asub = [[0]]
+                aval = [[A * d1 + B * d2]]
+
+                numvar = len(bkx)
+                numcon = len(bkc)
+
+                # Append 'numcon' empty constraints.
+                # The constraints will initially have no bounds.
+                task.appendcons(numcon)
+
+                # Append 'numvar' variables.
+                # The variables will initially be fixed at zero (x=0).
+                task.appendvars(numvar)
+
+                for j in range(numvar):
+                    # Set the linear term c_j in the objective.
+                    task.putcj(j, c[j])
+                    # Set the bounds on variable j
+                    # blx[j] <= x_j <= bux[j]
+                    task.putvarbound(j, bkx[j], blx[j], bux[j])
+                    # Input column j of A
+                    task.putacol(j,  # Variable (column) index.
+                                 # Row index of non-zeros in column j.
+                                 asub[j],
+                                 aval[j])  # Non-zero Values of column j.
+                for i in range(numcon):
+                    task.putconbound(i, bkc[i], blc[i], buc[i])
+
+                # Set up and input quadratic objective
+                qsubi = [0]
+                qsubj = [0]
+                qval = [2.0/(0.24 * 0.24)]
+
+                task.putqobj(qsubi, qsubj, qval)
+
+                # Input the objective sense (minimize/maximize)
+                task.putobjsense(mosek.objsense.minimize)
+
+                # Optimize
+                task.optimize()
+                # Print a summary containing information
+                # about the solution for debugging purposes
+                # task.solutionsummary(mosek.streamtype.msg)
+
+                prosta = task.getprosta(mosek.soltype.itr)
+                solsta = task.getsolsta(mosek.soltype.itr)
+
+                # Output a solution
+                xx = [0.] * numvar
+                task.getxx(mosek.soltype.itr,
+                           xx)
+
+                '''if solsta == mosek.solsta.optimal:
+                    print("Optimal solution: %s" % xx)
+                elif solsta == mosek.solsta.dual_infeas_cer:
+                    print("Primal or dual infeasibility.\n")
+                elif solsta == mosek.solsta.prim_infeas_cer:
+                    print("Primal or dual infeasibility.\n")
+                elif mosek.solsta.unknown:
+                    print("Unknown solution status")
+                else:
+                    print("Other solution status")'''
+
+                if xx[0] > 0.24:
+                    xx[0] = 0.24
+                if xx[0] < -0.24:
+                    xx[0] = -0.24
+
+                if np.abs(xx[0]/0.24 - action_omega) < 0.01:
+                    return action
+
+                delta_action = xx[0]/0.24 - action_omega
+                action[3] = action[3] + delta_action/2
+                action[4] = action[4] - delta_action/2
+
+                # temp = action[3] - action[4]
+
+                '''action[3] = + xx[0]/2
+                action[4] = - xx[0]/2'''
+                return action
+
+    def get_safe_action_old(self, observation, action, c, env):
         self._eval_mode()
         g = [x(self._as_tensor(observation).view(1, -1)) for x in self._models]
         self._train_mode()
 
+        action_omega = action[3] - action[4]
         # Find the lagrange multipliers
         g = [x.data.numpy().reshape(-1) for x in g]
-        multipliers = [(np.dot(g_i, action) + c_i) / np.dot(g_i, g_i) for g_i, c_i in zip(g, c)]
+        multipliers = [(np.dot(g_i, action_omega) + c_i) / np.dot(g_i, g_i) for g_i, c_i in zip(g, c)]
         multipliers = [np.clip(x, 0, np.inf) for x in multipliers]
-        '''new_obs_n, rew_n, done_n, info_n = env.step([action])
-        c_next = env.get_constraint_values()
-        temp = [(np.dot(g_i, action) + c_i) for g_i, c_i in zip(g, c)]'''
+        temp = [(np.dot(g_i, action_omega) + c_i) for g_i, c_i in zip(g, c)]
 
         # Calculate correction
         correction = np.max(multipliers) * g[np.argmax(multipliers)]
 
-        action_new = action - correction * 0.0
-        multipliers_new = [(np.dot(g_i, action_new) + c_i) / np.dot(g_i, g_i) for g_i, c_i in zip(g, c)]
+        action[3] = action[3] - correction/2.0
+        action[4] = action[4] - correction/2.0
+        '''temp = [(np.dot(g_i, action_new) + c_i) for g_i, c_i in zip(g, c)]
 
-        return action_new
+        new_obs_n, rew_n, done_n, info_n = env.step([action_new])
+        c_next = env.get_constraint_values()'''
+
+        return action
 
     def train(self):
         print("==========================================================")

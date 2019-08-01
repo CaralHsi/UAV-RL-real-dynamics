@@ -3,8 +3,21 @@ import numpy as np
 import tensorflow as tf
 import time
 import pickle
+import numpy as np
+from matplotlib import pyplot as plt
+import matplotlib.patches as mpathes
 import sys
+
 sys.path.append('../')
+np.set_printoptions(threshold=1e6)
+
+# 禁飞区 多个  8个 partial observable
+# omega 平滑
+# 测试用例 给定
+# theta 随机
+# 禁飞区 圆 椭圆
+# AST2015 低通滤波
+
 
 # keras_version=='2.2.4'
 # tensorflow_version=='1.13.1'
@@ -19,7 +32,7 @@ def parse_args():
     parser = argparse.ArgumentParser("Reinforcement Learning experiments for multiagent environments")
     # Environment
     parser.add_argument("--scenario", type=str, default="my_UAV_world", help="name of the scenario script")
-    parser.add_argument("--max-episode-len", type=int, default=40, help="maximum episode length")
+    parser.add_argument("--max-episode-len", type=int, default=60, help="maximum episode length")
     parser.add_argument("--num-episodes", type=int, default=600000, help="number of episodes")
     parser.add_argument("--num-adversaries", type=int, default=1, help="number of adversaries")
     parser.add_argument("--good-policy", type=str, default="maddpg", help="policy for good agents")
@@ -32,7 +45,7 @@ def parse_args():
     parser.add_argument("--use-safety-layer", action="store_true", default=True)
     # Checkpointing
     parser.add_argument("--exp-name", type=str, default=None, help="name of the experiment")
-    parser.add_argument("--save-dir", type=str, default="./ckpt_my_UAV_world_1_landmarks/test.ckpt", help="directory in which training state and model should be saved")
+    parser.add_argument("--save-dir", type=str, default="./ckpt_my_UAV_world_6_landmarks_safety_layer/test.ckpt", help="directory in which training state and model should be saved")
     parser.add_argument("--save-rate", type=int, default=1000, help="save model once every time this many episodes are completed")
     parser.add_argument("--load-dir", type=str, default="", help="directory in which training state and model are loaded")
     # Evaluation
@@ -113,7 +126,7 @@ def train(arglist):
             safety_layer = SafetyLayer(env, len(env.world.landmarks) - 1, mlp_model_safety_layer,
                                        env.observation_space[0].shape,
                                        env.action_space, trainers[0].action)
-            safety_layer.train()
+            # safety_layer.train()
 
         # set safety_layer for trainer[0]
         trainers[0].set_safety_layer(safety_layer)
@@ -138,6 +151,7 @@ def train(arglist):
         train_step = 0
         cumulative_constraint_violations = 0
         t_start = time.time()
+        data_save = []
 
         print('Starting iterations...')
         while True:
@@ -152,6 +166,7 @@ def train(arglist):
             action_n = [agent.action_real(obs, c, env) for agent, obs, c in zip(trainers, obs_n, c_n)]
             action_real = [action_n[0][0]]
             action_n = [action_n[0][1]]
+            data_save.append(np.concatenate([obs_n[0], action_n[0], action_n[0]]))
             # environment step
             new_obs_n, rew_n, done_n, info_n = env.step(action_n)
             # new c_n
@@ -168,6 +183,37 @@ def train(arglist):
                 episode_rewards[-1] += rew
                 agent_rewards[i][-1] += rew
             if done or terminal:
+                data_save.append(np.concatenate([obs_n[0], action_n[0], action_n[0]]))
+                data_save = np.array(data_save)
+                np.savetxt("data_save.txt", data_save)  # 缺省按照'%.18e'格式保存数据，以空格分隔
+
+                # plot x, y, v, theta
+                a = data_save
+                V = a[:, 0]
+                x = a[:, 1]
+                y = a[:, 2]
+                theta = a[:, 3]
+                action_n = a[:, 25] - a[:, 26]
+                action_real = a[:, 30] - a[:, 31]
+                fig, ax = plt.subplots(ncols=2, nrows=2)
+                for i, landmark in enumerate(env.world.landmarks):
+                    p_pos = landmark.state.p_pos
+                    r = landmark.size
+                    circle = mpathes.Circle(p_pos, r)
+                    ax[0, 0].add_patch(circle)
+                ax[0, 0].plot(x, y)
+                ax[0, 0].set_xlim((-1, 1))
+                ax[0, 0].set_ylim((-1, 1))
+                ax[0, 0].set_title("x-y")
+                ax[0, 0].axis('equal')
+                ax[0, 1].plot(theta)
+                ax[0, 1].set_title("theta")
+                ax[1, 0].plot(action_n * 0.24)
+                ax[1, 0].set_title("omega")
+                plt.show()
+
+                # reset and continue
+                data_save = []
                 obs_n = env.reset()
                 episode_step = 0
                 episode_rewards.append(0)
