@@ -160,8 +160,8 @@ class MADDPGAgentTrainer(AgentTrainer):
     def action_real(self, obs, c=None, env=None):
         action = self.act(obs[None])[0]
         action_real = action
-        if self.safety_layer and c is not None and env is not None:
-            action = self.safety_layer.get_safe_action(obs, action, env)
+        '''if self.safety_layer and c is not None and env is not None:
+            action = self.safety_layer.get_safe_action(obs, action, env)'''
         return action_real, action
 
     def set_safety_layer(self, safety_layer):
