@@ -211,7 +211,7 @@ def train(arglist):
                 ax[0, 1].set_title("theta")
                 ax[1, 0].plot(omega)
                 ax[1, 0].set_title("omega")
-                ax[1, 1].plot(action_n * 0.18)
+                ax[1, 1].plot(action_n * 0.12)
                 ax[1, 1].set_title("action_n")
                 plt.show()'''
 
