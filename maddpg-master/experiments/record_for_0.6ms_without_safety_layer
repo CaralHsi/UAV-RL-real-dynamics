@@ -1758,3 +1758,37 @@ steps: 1493685, episodes: 36000, mean episode reward: -46.258335389516816, num_c
 steps: 1534739, episodes: 37000, mean episode reward: -46.58431176793563, num_cumulative_constraints: 7626, agent episode reward: [-46.58431176793563], time: 56.995
 steps: 1575865, episodes: 38000, mean episode reward: -46.58735995842175, num_cumulative_constraints: 7801, agent episode reward: [-46.58735995842175], time: 50.779
 steps: 1616981, episodes: 39000, mean episode reward: -46.90272142950072, num_cumulative_constraints: 7971, agent episode reward: [-46.90272142950072], time: 55.66
+
+
+
+without safety layer
+0.12 d_omega
+steps: 44417, episodes: 1000, mean episode reward: -56.51624081739307, num_cumulative_constraints: 1646, agent episode reward: [-56.51624081739307], time: 39.548
+steps: 88808, episodes: 2000, mean episode reward: -55.98498473474833, num_cumulative_constraints: 3222, agent episode reward: [-55.98498473474833], time: 42.586
+steps: 133380, episodes: 3000, mean episode reward: -56.42928681979548, num_cumulative_constraints: 4973, agent episode reward: [-56.42928681979548], time: 45.192
+steps: 177901, episodes: 4000, mean episode reward: -55.97539482358688, num_cumulative_constraints: 6649, agent episode reward: [-55.97539482358688], time: 43.974
+steps: 222165, episodes: 5000, mean episode reward: -56.036676160327524, num_cumulative_constraints: 8318, agent episode reward: [-56.036676160327524], time: 46.011
+steps: 266604, episodes: 6000, mean episode reward: -55.82003712300773, num_cumulative_constraints: 9914, agent episode reward: [-55.82003712300773], time: 45.597
+steps: 310729, episodes: 7000, mean episode reward: -55.81680420052766, num_cumulative_constraints: 11624, agent episode reward: [-55.81680420052766], time: 46.203
+steps: 354896, episodes: 8000, mean episode reward: -55.72053755756192, num_cumulative_constraints: 13244, agent episode reward: [-55.72053755756192], time: 47.962
+steps: 399076, episodes: 9000, mean episode reward: -56.22779852129669, num_cumulative_constraints: 15015, agent episode reward: [-56.22779852129669], time: 45.309
+steps: 443489, episodes: 10000, mean episode reward: -55.59207180392459, num_cumulative_constraints: 16633, agent episode reward: [-55.59207180392459], time: 44.823
+steps: 487735, episodes: 11000, mean episode reward: -55.49588858572357, num_cumulative_constraints: 18166, agent episode reward: [-55.49588858572357], time: 45.309
+steps: 532376, episodes: 12000, mean episode reward: -55.68270631698942, num_cumulative_constraints: 19769, agent episode reward: [-55.68270631698942], time: 44.615
+steps: 576924, episodes: 13000, mean episode reward: -55.95032159510975, num_cumulative_constraints: 21423, agent episode reward: [-55.95032159510975], time: 44.886
+steps: 621518, episodes: 14000, mean episode reward: -56.0607264446749, num_cumulative_constraints: 23133, agent episode reward: [-56.0607264446749], time: 45.907
+steps: 665666, episodes: 15000, mean episode reward: -55.09496317585968, num_cumulative_constraints: 24608, agent episode reward: [-55.09496317585968], time: 44.506
+steps: 709982, episodes: 16000, mean episode reward: -55.36752481137236, num_cumulative_constraints: 26190, agent episode reward: [-55.36752481137236], time: 44.311
+steps: 753977, episodes: 17000, mean episode reward: -54.75230503127414, num_cumulative_constraints: 27754, agent episode reward: [-54.75230503127414], time: 44.656
+steps: 798113, episodes: 18000, mean episode reward: -55.55244476603846, num_cumulative_constraints: 29394, agent episode reward: [-55.55244476603846], time: 48.797
+steps: 843194, episodes: 19000, mean episode reward: -56.374600171261804, num_cumulative_constraints: 31104, agent episode reward: [-56.374600171261804], time: 51.616
+steps: 887952, episodes: 20000, mean episode reward: -55.46673781349413, num_cumulative_constraints: 32645, agent episode reward: [-55.46673781349413], time: 49.248
+steps: 931980, episodes: 21000, mean episode reward: -54.72003413724955, num_cumulative_constraints: 34095, agent episode reward: [-54.72003413724955], time: 45.628
+
+steps: 44415, episodes: 1000, mean episode reward: -55.76687138139704, num_cumulative_constraints: 1795, agent episode reward: [-55.76687138139704], time: 39.069
+steps: 89061, episodes: 2000, mean episode reward: -56.35492816601367, num_cumulative_constraints: 3615, agent episode reward: [-56.35492816601367], time: 42.05
+steps: 133369, episodes: 3000, mean episode reward: -56.0207479201874, num_cumulative_constraints: 5377, agent episode reward: [-56.0207479201874], time: 43.581
+steps: 177540, episodes: 4000, mean episode reward: -55.80424432121149, num_cumulative_constraints: 7097, agent episode reward: [-55.80424432121149], time: 44.206
+steps: 222079, episodes: 5000, mean episode reward: -56.3266490614756, num_cumulative_constraints: 8880, agent episode reward: [-56.3266490614756], time: 44.685
+steps: 267061, episodes: 6000, mean episode reward: -56.63177561116354, num_cumulative_constraints: 10665, agent episode reward: [-56.63177561116354], time: 45.712
+steps: 311610, episodes: 7000, mean episode reward: -56.6939758778684, num_cumulative_constraints: 12537, agent episode reward: [-56.6939758778684], time: 46.999
