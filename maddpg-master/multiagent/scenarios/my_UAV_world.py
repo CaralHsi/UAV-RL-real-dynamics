@@ -113,7 +113,7 @@ class Scenario(BaseScenario):
         # action diff punishment
         omega_last = action_last[3] - action_last[4]
         omega = action[3] - action[4]
-        rew -= np.square(omega_last - omega)
+        '''rew -= np.square(omega_last - omega)'''
 
         # collision punishment
         if agent.collide:

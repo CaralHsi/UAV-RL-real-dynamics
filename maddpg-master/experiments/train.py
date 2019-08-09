@@ -152,6 +152,7 @@ def train(arglist):
         cumulative_constraint_violations = 0
         t_start = time.time()
         data_save = []
+        num_done = 0
 
         print('Starting iterations...')
         while True:
@@ -182,10 +183,14 @@ def train(arglist):
             for i, rew in enumerate(rew_n):
                 episode_rewards[-1] += rew
                 agent_rewards[i][-1] += rew
+
             if done or terminal:
+                if done:
+                    num_done = num_done + 1
+
                 data_save.append(np.concatenate([obs_n[0], action_n[0], action_n[0]]))
                 data_save = np.array(data_save)
-                np.savetxt("data_save.txt", data_save)  # 缺省按照'%.18e'格式保存数据，以空格分隔
+                '''np.savetxt("data_save.txt", data_save)'''  # 缺省按照'%.18e'格式保存数据，以空格分隔
 
                 # plot x, y, v, theta
                 '''a = data_save
@@ -257,15 +262,17 @@ def train(arglist):
                 U.save_state(arglist.save_dir, saver=saver)
                 # print statement depends on whether or not there are adversaries
                 if num_adversaries == 0:
-                    print("steps: {}, episodes: {}, mean episode reward: {}, num_cumulative_constraints: {}, time: {}".format(
+                    print("steps: {}, episodes: {}, mean episode reward: {}, num_cumulative_constraints: {}, num_done: {}, time: {}".format(
                         train_step, len(episode_rewards), np.mean(episode_rewards[-arglist.save_rate:]),
-                        cumulative_constraint_violations, round(time.time()-t_start, 3)))
+                        cumulative_constraint_violations, num_done, round(time.time()-t_start, 3)))
                 else:
-                    print("steps: {}, episodes: {}, mean episode reward: {}, num_cumulative_constraints: {}, agent episode reward: {}, time: {}".format(
+                    print("steps: {}, episodes: {}, mean episode reward: {}, num_cumulative_constraints: {}, num_done: {}, time: {}".format(
                         train_step, len(episode_rewards), np.mean(episode_rewards[-arglist.save_rate:]),
                         cumulative_constraint_violations,
-                        [np.mean(rew[-arglist.save_rate:]) for rew in agent_rewards], round(time.time()-t_start, 3)))
+                        num_done, round(time.time()-t_start, 3)))
                 t_start = time.time()
+                num_done = 0
+                cumulative_constraint_violations = 0
                 # Keep track of final episode reward
                 final_ep_rewards.append(np.mean(episode_rewards[-arglist.save_rate:]))
                 for rew in agent_rewards:

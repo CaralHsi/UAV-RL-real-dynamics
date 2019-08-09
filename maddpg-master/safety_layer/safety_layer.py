@@ -202,8 +202,9 @@ class SafetyLayer:
         y = observation[2]
         V = observation[0]
         theta = observation[3]
+        omega = observation[4]
         # print(theta)
-        action_omega = action[3] - action[4]
+        d_omega = action[3] - action[4]
         dt = environment.world.dt
         a1 = x + V * np.cos(theta) * dt + theta * V * np.sin(theta) * dt
         b1 = - V * np.sin(theta) * dt
@@ -243,14 +244,15 @@ class SafetyLayer:
                 # Set up and input bounds and linear coefficients
                 bkc = [mosek.boundkey.up]
                 blc = [-inf]
-                buc = [- C - A * c1 - B * c2]
+                buc = [- C - A * c1 - B * c2 - (A * d1 + B * d2) * omega]
                 numvar = 1
                 bkx = [mosek.boundkey.fr] * numvar
                 blx = [-inf] * numvar
                 bux = [inf] * numvar
-                c = [- 2.0/0.24 * action_omega]
+                temp = 0.07
+                c = [- 2.0/temp * d_omega]
                 asub = [[0]]
-                aval = [[A * d1 + B * d2]]
+                aval = [[(A * d1 + B * d2) * dt]]
 
                 numvar = len(bkx)
                 numcon = len(bkc)
@@ -280,7 +282,7 @@ class SafetyLayer:
                 # Set up and input quadratic objective
                 qsubi = [0]
                 qsubj = [0]
-                qval = [2.0/(0.24 * 0.24)]
+                qval = [2.0/(temp * temp)]
 
                 task.putqobj(qsubi, qsubj, qval)
 
@@ -312,15 +314,15 @@ class SafetyLayer:
                 else:
                     print("Other solution status")'''
 
-                if xx[0] > 0.24:
-                    xx[0] = 0.24
-                if xx[0] < -0.24:
-                    xx[0] = -0.24
+                if xx[0] > temp:
+                    xx[0] = temp
+                if xx[0] < -temp:
+                    xx[0] = -temp
 
-                if np.abs(xx[0]/0.24 - action_omega) < 0.01:
+                if np.abs(xx[0]/0.12 - d_omega) < 0.02:
                     return action
 
-                delta_action = xx[0]/0.24 - action_omega
+                delta_action = xx[0]/0.12 - d_omega
                 action[3] = action[3] + delta_action/2
                 action[4] = action[4] - delta_action/2
 
