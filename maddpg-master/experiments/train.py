@@ -254,8 +254,8 @@ def train(arglist):
             loss = None
             for agent in trainers:
                 agent.preupdate()
-            for agent in trainers:
-                loss = agent.update(trainers, train_step)
+            '''for agent in trainers:
+                loss = agent.update(trainers, train_step)'''
 
             # save model, display training output
             if (done or terminal) and (len(episode_rewards) % arglist.save_rate == 0):
