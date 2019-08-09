@@ -13,7 +13,7 @@ class Scenario(BaseScenario):
         num_agents = 1
         num_landmarks = 10
         world.observing_range = 0.7
-        world.min_corridor = 0.06
+        world.min_corridor = 0.09
         world.collaborative = True
         # add agents
         world.agents = [Agent() for _ in range(num_agents)]
@@ -38,6 +38,13 @@ class Scenario(BaseScenario):
         return world
 
     def reset_world(self, world):
+        for i, landmark in enumerate(world.landmarks):
+            landmark.name = 'landmark %d' % i
+            landmark.collide = False
+            landmark.movable = False
+            landmark.size = np.random.uniform(0.20, 0.25)
+            if i == (len(world.landmarks) - 1):
+                landmark.size = 0.04
         # random properties for agents
         for i, agent in enumerate(world.agents):
             agent.color = np.array([0.35, 0.35, 0.85])
@@ -61,24 +68,37 @@ class Scenario(BaseScenario):
         landmark = world.landmarks[-1]
         landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(0.9, +1, 1), np.random.uniform(-0.1, +0.1, 1)]))
         landmark.state.p_vel = np.zeros(world.dim_p)
-        for i, landmark in enumerate(world.landmarks[0:-1]):
-            flag = 1  # to set landmarks separately
-            while flag:
-                landmark.state.p_pos = np.random.uniform(-1, +0.9, world.dim_p)
-                temp1 = []
-                temp2 = []
-                temp1.append(np.sqrt(np.sum(np.square(world.agents[0].state.p_pos - landmark.state.p_pos))))
-                temp2.append(world.agents[0].size + landmark.size + world.min_corridor)
-                for j in range(0, i+1):
-                    if j == i:
-                        j_ = -1
-                    else:
-                        j_ = j
-                    temp1.append(np.sqrt(np.sum(np.square(world.landmarks[j_].state.p_pos - landmark.state.p_pos))))
-                    temp2.append(world.landmarks[j_].size + landmark.size + world.min_corridor)
-                if min(np.array(temp1) - np.array(temp2)) > 0:
-                    flag = 0
-            landmark.state.p_vel = np.zeros(world.dim_p)
+        done = 0
+        while not done:
+            fail = 0
+            for i, landmark in enumerate(world.landmarks[0:-1]):
+                if fail:
+                    break
+                flag = 1  # to set landmarks separately
+                max_num = 0
+                while flag:
+                    max_num = max_num + 1
+                    if max_num > 30:
+                        fail = 1
+                        break
+                    landmark.state.p_pos = np.random.uniform(-1, +0.9, world.dim_p)
+                    temp1 = []
+                    temp2 = []
+                    temp1.append(np.sqrt(np.sum(np.square(world.agents[0].state.p_pos - landmark.state.p_pos))))
+                    temp2.append(world.agents[0].size + landmark.size + world.min_corridor)
+                    for j in range(0, i + 1):
+                        if j == i:
+                            j_ = -1
+                        else:
+                            j_ = j
+                        temp1.append(np.sqrt(np.sum(np.square(world.landmarks[j_].state.p_pos - landmark.state.p_pos))))
+                        temp2.append(world.landmarks[j_].size + landmark.size + world.min_corridor)
+                    if min(np.array(temp1) - np.array(temp2)) > 0:
+                        flag = 0
+                landmark.state.p_vel = np.zeros(world.dim_p)
+            if fail:
+                continue
+            done = 1
 
     def benchmark_data(self, agent, world):
         rew = 0

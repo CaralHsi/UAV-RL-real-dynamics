@@ -189,7 +189,7 @@ class SafetyLayer:
         flag = True
         for i, landmark in enumerate(environment.world.landmarks[0:-1]):
             dist = np.sqrt(np.sum(np.square(environment.world.policy_agents[0].state.p_pos - landmark.state.p_pos))) \
-                   - (environment.world.policy_agents[0].size + landmark.size) - 0.035
+                   - (environment.world.policy_agents[0].size + landmark.size) - 0.007
             if dist <= 0:
                 x0 = landmark.state.p_pos[0]
                 y0 = landmark.state.p_pos[1]
@@ -249,7 +249,7 @@ class SafetyLayer:
                 bkx = [mosek.boundkey.fr] * numvar
                 blx = [-inf] * numvar
                 bux = [inf] * numvar
-                temp = 0.07
+                temp = 0.12
                 c = [- 2.0/temp * d_omega]
                 asub = [[0]]
                 aval = [[(A * d1 + B * d2) * dt]]
