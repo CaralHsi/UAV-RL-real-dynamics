@@ -189,7 +189,7 @@ class SafetyLayer:
         flag = True
         for i, landmark in enumerate(environment.world.landmarks[0:-1]):
             dist = np.sqrt(np.sum(np.square(environment.world.policy_agents[0].state.p_pos - landmark.state.p_pos))) \
-                   - (environment.world.policy_agents[0].size + landmark.size) - 0.007
+                   - (environment.world.policy_agents[0].size + landmark.size) - 0.03
             if dist <= 0:
                 x0 = landmark.state.p_pos[0]
                 y0 = landmark.state.p_pos[1]
@@ -244,15 +244,15 @@ class SafetyLayer:
                 # Set up and input bounds and linear coefficients
                 bkc = [mosek.boundkey.up]
                 blc = [-inf]
-                buc = [- C - A * c1 - B * c2 - (A * d1 + B * d2) * omega]
+                buc = [- C - A * c1 - B * c2]
                 numvar = 1
                 bkx = [mosek.boundkey.fr] * numvar
                 blx = [-inf] * numvar
                 bux = [inf] * numvar
                 temp = 0.12
-                c = [- 2.0/temp * d_omega]
+                c = [- 2.0 * omega - 2 * dt * d_omega]
                 asub = [[0]]
-                aval = [[(A * d1 + B * d2) * dt]]
+                aval = [[A * d1 + B * d2]]
 
                 numvar = len(bkx)
                 numcon = len(bkc)
@@ -282,7 +282,7 @@ class SafetyLayer:
                 # Set up and input quadratic objective
                 qsubi = [0]
                 qsubj = [0]
-                qval = [2.0/(temp * temp)]
+                qval = [2.0]
 
                 task.putqobj(qsubi, qsubj, qval)
 
@@ -314,6 +314,7 @@ class SafetyLayer:
                 else:
                     print("Other solution status")'''
 
+                xx = (xx[0] - omega)/dt
                 if xx[0] > temp:
                     xx[0] = temp
                 if xx[0] < -temp:

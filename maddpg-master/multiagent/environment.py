@@ -193,10 +193,14 @@ class MultiAgentEnv(gym.Env):
             if self.discrete_action_input:
                 agent.action.u = np.zeros(self.world.dim_p)
                 # process discrete action
-                if action[0] == 1: agent.action.u[0] = -1.0
-                if action[0] == 2: agent.action.u[0] = +1.0
-                if action[0] == 3: agent.action.u[1] = -1.0
-                if action[0] == 4: agent.action.u[1] = +1.0
+                if action[0] == 1:
+                    agent.action.u[0] = -1.0
+                if action[0] == 2:
+                    agent.action.u[0] = +1.0
+                if action[0] == 3:
+                    agent.action.u[1] = -1.0
+                if action[0] == 4:
+                    agent.action.u[1] = +1.0
             else:
                 if self.force_discrete_action:
                     d = np.argmax(action[0])
@@ -305,7 +309,7 @@ class MultiAgentEnv(gym.Env):
             uav_position = self.world.entities[0].state.p_pos
             for l, landmark in enumerate(self.world.landmarks):
                     dis = np.sqrt(np.sum(np.square([uav_position - landmark.state.p_pos])))
-                    if dis <= 0.7:
+                    if dis <= self.world.observing_range:
                         temp = rendering.make_line(uav_position, landmark.state.p_pos)
                         temp.set_color(0, 245, 255)
                         self.viewers[i].geoms.append(temp)

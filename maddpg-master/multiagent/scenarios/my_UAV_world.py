@@ -13,7 +13,7 @@ class Scenario(BaseScenario):
         num_agents = 1
         num_landmarks = 10
         world.observing_range = 0.7
-        world.min_corridor = 0.09
+        world.min_corridor = 0.15
         world.collaborative = True
         # add agents
         world.agents = [Agent() for _ in range(num_agents)]
