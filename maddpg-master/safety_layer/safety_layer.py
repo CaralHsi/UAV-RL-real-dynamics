@@ -189,24 +189,16 @@ class SafetyLayer:
 
     def get_safe_action(self, observation, action, environment):
         flag = True
+        landmark_near = []
         for i, landmark in enumerate(environment.world.landmarks[0:-1]):
             dist = np.sqrt(np.sum(np.square(environment.world.policy_agents[0].state.p_pos - landmark.state.p_pos))) \
-                   - (environment.world.policy_agents[0].size + landmark.size) - 0.03
-            dist1 = np.sqrt(np.sum(np.square(environment.world.policy_agents[0].state.p_pos - landmark.state.p_pos))) \
-                            - landmark.size
-            if dist1 <= 0:
-                return action, False
+                   - (environment.world.policy_agents[0].size + landmark.size) - 0.06
             if dist <= 0:
-                self.R = landmark.size
-                x0 = landmark.state.p_pos[0]
-                y0 = landmark.state.p_pos[1]
-                landmark0 = landmark
+                landmark_near.append(landmark)
                 flag = False
-                break
-
-
         if flag:
             return action, False
+
         x = observation[1]
         y = observation[2]
         V = observation[0]
@@ -227,52 +219,66 @@ class SafetyLayer:
         f1 = -2 * x * d1
         e2 = -2 * y * c2
         f2 = -2 * y * d2
-        g = d1 * d1 + d2 * d2
-        h = 2 * c1 * d1 + 2 * c2 * d2 + f1 + f2
-        i = c1 * c1 + c2 * c2 + e1 + e2 + np.square(landmark0.state.p_pos[0]) + \
-            np.square(landmark0.state.p_pos[1])
-        lower_c = np.square(landmark0.size + 0.01)
-        upper_c = inf
-        A = landmark0.state.p_pos[0] - x
-        B = landmark0.state.p_pos[1] - y
-        C = - (landmark0.state.p_pos[0]) * x \
-            + np.square(x) \
-            - (landmark0.state.p_pos[1]) * y \
-            + np.square(y)
 
-        # solve x3
-        self.x0 = np.array([x, y])
-        self.x1 = np.array([x0, y0])
-        args = [np.square(self.x1[1] - self.x0[1]) + np.square(self.x1[0] - self.x0[0]),
-                2 * (self.x1[1] - self.x0[1]) * np.square(self.R),
-                np.square(np.square(self.R)) - np.square(self.R) * np.square(self.x1[0] - self.x0[0])]
-        root = np.roots(args)
-        y3_0 = root[0] + self.x1[1]
-        y3_1 = root[1] + self.x1[1]
-        x3_0 = (-(y3_0 - self.x1[1]) * (self.x1[1] - self.x0[1]) - np.square(self.R))/(self.x1[0] - self.x0[0]) + \
-                self.x1[0]
-        x3_1 = (-(y3_1 - self.x1[1]) * (self.x1[1] - self.x0[1]) - np.square(self.R)) / (self.x1[0] - self.x0[0]) + \
-                self.x1[0]
+        flag = True
+        for _, landmark in enumerate(landmark_near):
+            self.R = landmark.size + 0.5 * environment.world.policy_agents[0].size
+            x0 = landmark.state.p_pos[0]
+            y0 = landmark.state.p_pos[1]
+            landmark0 = landmark
 
-        x3 = np.array([x3_0, y3_0])
-        temp1 = ((y - y0) * c1 - (x - x0) * c2 - y * x0 + y0 * x) \
-                * ((y - y0) * x3[0] - (x - x0) * x3[1] - y * x0 + y0 * x)
-        x3 = np.array([x3_1, y3_1])
-        x3 = np.array([x3_0, y3_0]) if temp1 > 0 else np.array([x3_1, y3_1])
-        x3[0] = 1.1 * x3[0] - 0.1 * self.x1[0]
-        x3[1] = 1.1 * x3[1] - 0.1 * self.x1[1]
-        '''print(((y - y0) * c1 - (x - x0) * d1 - y * x0 + y0 * x)
-              * ((y - y0) * x3[0] - (x - x0) * x3[1] - y * x0 + y0 * x))
-        print((x3[0] - self.x0[0]) * (x3[0] - self.x1[0]) + (x3[1] - self.x0[1]) * (x3[1] - self.x1[1]))
-        print((x3[0] - self.x1[0]) * (x3[0] - self.x1[0]) + (x3[1] - self.x1[1]) * (x3[1] - self.x1[1]) - self.R * self.R)'''
-        temp2 = ((x3[1] - self.x0[1]) * self.x1[0] - (x3[0] - self.x0[0]) * self.x1[1] + self.x0[1] * x3[0] - self.x0[0] * x3[1]) \
-                * ((x3[1] - self.x0[1]) * c1 - (x3[0] - self.x0[0]) * c2 + self.x0[1] * x3[0] - self.x0[0] * x3[1])
-        if temp2 < 0:
+            g = d1 * d1 + d2 * d2
+            h = 2 * c1 * d1 + 2 * c2 * d2 + f1 + f2
+            i = c1 * c1 + c2 * c2 + e1 + e2 + np.square(landmark0.state.p_pos[0]) + \
+                np.square(landmark0.state.p_pos[1])
+            lower_c = np.square(landmark0.size + 0.01)
+            upper_c = inf
+            A = landmark0.state.p_pos[0] - x
+            B = landmark0.state.p_pos[1] - y
+            C = - (landmark0.state.p_pos[0]) * x \
+                + np.square(x) \
+                - (landmark0.state.p_pos[1]) * y \
+                + np.square(y)
+
+            # solve x3
+            self.x0 = np.array([x, y])
+            self.x1 = np.array([x0, y0])
+            args = [np.square(self.x1[1] - self.x0[1]) + np.square(self.x1[0] - self.x0[0]),
+                    2 * (self.x1[1] - self.x0[1]) * np.square(self.R),
+                    np.square(np.square(self.R)) - np.square(self.R) * np.square(self.x1[0] - self.x0[0])]
+            root = np.roots(args)
+            y3_0 = root[0] + self.x1[1]
+            y3_1 = root[1] + self.x1[1]
+            x3_0 = (-(y3_0 - self.x1[1]) * (self.x1[1] - self.x0[1]) - np.square(self.R))/(self.x1[0] - self.x0[0]) + \
+                    self.x1[0]
+            x3_1 = (-(y3_1 - self.x1[1]) * (self.x1[1] - self.x0[1]) - np.square(self.R)) / (self.x1[0] - self.x0[0]) + \
+                    self.x1[0]
+
+            x3 = np.array([x3_0, y3_0])
+            temp1 = ((y - y0) * c1 - (x - x0) * c2 - y * x0 + y0 * x) \
+                    * ((y - y0) * x3[0] - (x - x0) * x3[1] - y * x0 + y0 * x)
+            x3 = np.array([x3_1, y3_1])
+            x3 = np.array([x3_0, y3_0]) if temp1 > 0 else np.array([x3_1, y3_1])
+            x3[0] = 1.1 * x3[0] - 0.1 * self.x1[0]
+            x3[1] = 1.1 * x3[1] - 0.1 * self.x1[1]
+            '''print(((y - y0) * c1 - (x - x0) * d1 - y * x0 + y0 * x)
+                  * ((y - y0) * x3[0] - (x - x0) * x3[1] - y * x0 + y0 * x))
+            print((x3[0] - self.x0[0]) * (x3[0] - self.x1[0]) + (x3[1] - self.x0[1]) * (x3[1] - self.x1[1]))
+            print((x3[0] - self.x1[0]) * (x3[0] - self.x1[0]) + (x3[1] - self.x1[1]) * (x3[1] - self.x1[1]) - self.R * self.R)'''
+            temp2 = ((x3[1] - self.x0[1]) * self.x1[0] - (x3[0] - self.x0[0]) * self.x1[1] + self.x0[1] * x3[0] - self.x0[0] * x3[1]) \
+                    * ((x3[1] - self.x0[1]) * c1 - (x3[0] - self.x0[0]) * c2 + self.x0[1] * x3[0] - self.x0[0] * x3[1])
+            k1 = temp2 * (x3[1] - self.x0[1])
+            k2 = temp2 * (x3[0] - self.x0[0])
+            k3 = temp2 * (self.x0[1] * x3[0] - self.x0[0] * x3[1])
+            if temp2 > 0:
+                flag = False
+                landmark0 = landmark
+                break
+        if flag:
             return action, False
         self.num_call = self.num_call + 1
-        k1 = temp2 * (x3[1] - self.x0[1])
-        k2 = temp2 * (x3[0] - self.x0[0])
-        k3 = temp2 * (self.x0[1] * x3[0] - self.x0[0] * x3[1])
+
+
 
 
         # Make a MOSEK environment

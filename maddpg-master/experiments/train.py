@@ -155,8 +155,8 @@ def train(arglist):
         num_done = 0
 
         # pickle env
-        '''env0 = copy.deepcopy(env)
-        file_path = open('env.pkl', 'rb')
+        # env0 = copy.deepcopy(env)
+        '''file_path = open('env.pkl', 'rb')
         import pickle
         for i in range(len(env.world.landmarks)):
             env.world.landmarks[i] = pickle.load(file_path)
@@ -266,7 +266,11 @@ def train(arglist):
                     r = landmark.size
                     circle = mpathes.Circle(p_pos, r)
                     ax[0, 0].add_patch(circle)
-                ax[0, 0].plot(x, y)
+                for i in range(len(x)):
+                    p_pos = np.array([x[i], y[i]])
+                    r = env.world.agents[0].size
+                    circle = mpathes.Circle(p_pos, r)
+                    ax[0, 0].add_patch(circle)
                 ax[0, 0].set_xlim((-1, 1))
                 ax[0, 0].set_ylim((-1, 1))
                 ax[0, 0].set_title("x-y")
