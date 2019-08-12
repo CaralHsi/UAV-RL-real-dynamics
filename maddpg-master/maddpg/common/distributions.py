@@ -244,7 +244,7 @@ class SoftCategoricalPd(Pd):
         p0 = ea0 / z0
         return U.sum(p0 * (tf.log(z0) - a0), axis=1)
     def sample(self):
-        u = tf.random_uniform(tf.shape(self.logits))
+        u = tf.random_uniform(tf.shape(self.logits), seed=2)
         return U.softmax(self.logits - tf.log(-tf.log(u)), axis=-1)  
     @classmethod
     def fromflat(cls, flat):

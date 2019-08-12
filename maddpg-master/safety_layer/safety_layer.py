@@ -5,6 +5,7 @@ import maddpg.common.tf_util as U
 import torch
 import mosek
 import sys
+from scipy.optimize import fsolve
 
 from maddpg.common.distributions import make_pdtype
 from maddpg import AgentTrainer
@@ -77,6 +78,7 @@ class SafetyLayer:
         self.evaluation_steps = 1500
         self.replay_buffer_size = 1000000
         self.num_units = 10
+        self.num_call = 0
         self._train_global_step = 0
         self._eval_global_step = 0
         self.max_replay_buffer = self.batch_size * self.max_episode_length  # 76800
@@ -190,14 +192,21 @@ class SafetyLayer:
         for i, landmark in enumerate(environment.world.landmarks[0:-1]):
             dist = np.sqrt(np.sum(np.square(environment.world.policy_agents[0].state.p_pos - landmark.state.p_pos))) \
                    - (environment.world.policy_agents[0].size + landmark.size) - 0.03
+            dist1 = np.sqrt(np.sum(np.square(environment.world.policy_agents[0].state.p_pos - landmark.state.p_pos))) \
+                            - landmark.size
+            if dist1 <= 0:
+                return action, False
             if dist <= 0:
+                self.R = landmark.size
                 x0 = landmark.state.p_pos[0]
                 y0 = landmark.state.p_pos[1]
                 landmark0 = landmark
                 flag = False
                 break
+
+
         if flag:
-            return action
+            return action, False
         x = observation[1]
         y = observation[2]
         V = observation[0]
@@ -231,6 +240,39 @@ class SafetyLayer:
             - (landmark0.state.p_pos[1]) * y \
             + np.square(y)
 
+        # solve x3
+        self.x0 = np.array([x, y])
+        self.x1 = np.array([x0, y0])
+        args = [np.square(self.x1[1] - self.x0[1]) + np.square(self.x1[0] - self.x0[0]),
+                2 * (self.x1[1] - self.x0[1]) * np.square(self.R),
+                np.square(np.square(self.R)) - np.square(self.R) * np.square(self.x1[0] - self.x0[0])]
+        root = np.roots(args)
+        y3_0 = root[0] + self.x1[1]
+        y3_1 = root[1] + self.x1[1]
+        x3_0 = (-(y3_0 - self.x1[1]) * (self.x1[1] - self.x0[1]) - np.square(self.R))/(self.x1[0] - self.x0[0]) + \
+                self.x1[0]
+        x3_1 = (-(y3_1 - self.x1[1]) * (self.x1[1] - self.x0[1]) - np.square(self.R)) / (self.x1[0] - self.x0[0]) + \
+                self.x1[0]
+
+        x3 = np.array([x3_0, y3_0])
+        temp1 = ((y - y0) * c1 - (x - x0) * c2 - y * x0 + y0 * x) \
+                * ((y - y0) * x3[0] - (x - x0) * x3[1] - y * x0 + y0 * x)
+        x3 = np.array([x3_1, y3_1])
+        x3 = np.array([x3_0, y3_0]) if temp1 > 0 else np.array([x3_1, y3_1])
+        x3[0] = 1.1 * x3[0] - 0.1 * self.x1[0]
+        x3[1] = 1.1 * x3[1] - 0.1 * self.x1[1]
+        '''print(((y - y0) * c1 - (x - x0) * d1 - y * x0 + y0 * x)
+              * ((y - y0) * x3[0] - (x - x0) * x3[1] - y * x0 + y0 * x))
+        print((x3[0] - self.x0[0]) * (x3[0] - self.x1[0]) + (x3[1] - self.x0[1]) * (x3[1] - self.x1[1]))
+        print((x3[0] - self.x1[0]) * (x3[0] - self.x1[0]) + (x3[1] - self.x1[1]) * (x3[1] - self.x1[1]) - self.R * self.R)'''
+        temp2 = ((x3[1] - self.x0[1]) * self.x1[0] - (x3[0] - self.x0[0]) * self.x1[1] + self.x0[1] * x3[0] - self.x0[0] * x3[1]) \
+                * ((x3[1] - self.x0[1]) * c1 - (x3[0] - self.x0[0]) * c2 + self.x0[1] * x3[0] - self.x0[0] * x3[1])
+        if temp2 < 0:
+            return action, False
+        self.num_call = self.num_call + 1
+        k1 = temp2 * (x3[1] - self.x0[1])
+        k2 = temp2 * (x3[0] - self.x0[0])
+        k3 = temp2 * (self.x0[1] * x3[0] - self.x0[0] * x3[1])
 
 
         # Make a MOSEK environment
@@ -244,7 +286,7 @@ class SafetyLayer:
                 # Set up and input bounds and linear coefficients
                 bkc = [mosek.boundkey.up]
                 blc = [-inf]
-                buc = [- C - A * c1 - B * c2]
+                buc = [- k3 - k1 * c1 + k2 * c2]
                 numvar = 1
                 bkx = [mosek.boundkey.fr] * numvar
                 blx = [-inf] * numvar
@@ -252,7 +294,7 @@ class SafetyLayer:
                 temp = 0.12
                 c = [- 2.0 * omega - 2 * dt * d_omega]
                 asub = [[0]]
-                aval = [[A * d1 + B * d2]]
+                aval = [[k1 * d1 - k2 * d2]]
 
                 numvar = len(bkx)
                 numcon = len(bkc)
@@ -315,15 +357,15 @@ class SafetyLayer:
                     print("Other solution status")'''
 
                 xx = (xx[0] - omega)/dt
-                if xx[0] > temp:
-                    xx[0] = temp
-                if xx[0] < -temp:
-                    xx[0] = -temp
+                if xx > temp:
+                    xx = temp
+                if xx < -temp:
+                    xx = -temp
 
-                if np.abs(xx[0]/0.12 - d_omega) < 0.02:
-                    return action
+                if np.abs(xx/0.12 - d_omega) < 0.02:
+                    return action, False
 
-                delta_action = xx[0]/0.12 - d_omega
+                delta_action = xx/0.12 - d_omega
                 action[3] = action[3] + delta_action/2
                 action[4] = action[4] - delta_action/2
 
@@ -331,7 +373,7 @@ class SafetyLayer:
 
                 '''action[3] = + xx[0]/2
                 action[4] = - xx[0]/2'''
-                return action
+                return action, True
 
     def get_safe_action_old(self, observation, action, c, env):
         self._eval_mode()

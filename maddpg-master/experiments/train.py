@@ -2,6 +2,7 @@ import argparse
 import numpy as np
 import tensorflow as tf
 import time
+import copy
 import pickle
 import numpy as np
 from matplotlib import pyplot as plt
@@ -16,7 +17,6 @@ np.set_printoptions(threshold=1e6)
 # 测试用例 给定
 # theta 随机
 # 禁飞区 圆 椭圆
-# AST2015 低通滤波
 
 
 # keras_version=='2.2.4'
@@ -154,6 +154,19 @@ def train(arglist):
         data_save = []
         num_done = 0
 
+        # pickle env
+        '''env0 = copy.deepcopy(env)
+        file_path = open('env.pkl', 'rb')
+        import pickle
+        for i in range(len(env.world.landmarks)):
+            env.world.landmarks[i] = pickle.load(file_path)
+        for i in range(len(env.world.agents)):
+            env.world.agents[i] = pickle.load(file_path)
+        obs_n = []
+        agents = env.world.agents
+        for agent in agents:
+            obs_n.append(env._get_obs(agent))'''
+
         print('Starting iterations...')
         while True:
             # get constraint_values
@@ -166,10 +179,56 @@ def train(arglist):
             # get action
             action_n = [agent.action_real(obs, c, env) for agent, obs, c in zip(trainers, obs_n, c_n)]
             action_real = [action_n[0][0]]
+            if_call = [action_n[0][2]]
             action_n = [action_n[0][1]]
             data_save.append(np.concatenate([obs_n[0], action_n[0], action_n[0]]))
             # environment step
             new_obs_n, rew_n, done_n, info_n = env.step(action_n)
+            is_any_collision_new = env.is_any_collision()
+            '''if if_call[0] and is_any_collision_new[0]:
+                file_path = open('env.pkl', 'wb')
+                import pickle
+                for i in range(len(env0.world.landmarks)):
+                    pickle.dump(env0.world.landmarks[i], file_path)
+                for i in range(len(env0.world.agents)):
+                    pickle.dump(env0.world.agents[i], file_path)
+                file_path.close()
+                data_save1 = np.array(data_save)
+
+                # plot x, y, v, theta
+                a = data_save1
+                V = a[:, 0]
+                x = a[:, 1]
+                x = np.append(x, new_obs_n[0][1])
+                y = a[:, 2]
+                y = np.append(y, new_obs_n[0][2])
+                theta = a[:, 3]
+                omega = a[:, 4]
+                action_n = a[:, 26] - a[:, 27]
+                action_real = a[:, 31] - a[:, 32]
+                fig, ax = plt.subplots(ncols=2, nrows=2)
+                for i, landmark in enumerate(env.world.landmarks):
+                    p_pos = landmark.state.p_pos
+                    r = landmark.size
+                    circle = mpathes.Circle(p_pos, r)
+                    ax[0, 0].add_patch(circle)
+                for i in range(len(x)):
+                    p_pos = np.array([x[i], y[i]])
+                    r = env.world.agents[0].size
+                    circle = mpathes.Circle(p_pos, r)
+                    ax[0, 0].add_patch(circle)
+                # ax[0, 0].plot(x, y)
+                ax[0, 0].set_xlim((-1, 1))
+                ax[0, 0].set_ylim((-1, 1))
+                ax[0, 0].set_title("x-y")
+                ax[0, 0].axis('equal')
+                ax[0, 1].plot(theta)
+                ax[0, 1].set_title("theta")
+                ax[1, 0].plot(omega)
+                ax[1, 0].set_title("omega")
+                ax[1, 1].plot(action_n * 0.12)
+                ax[1, 1].set_title("action_n")
+                plt.show()'''
             # new c_n
             # new_c_n = env.get_constraint_values()
             episode_step += 1
@@ -223,6 +282,7 @@ def train(arglist):
                 # reset and continue
                 data_save = []
                 obs_n = env.reset()
+                # env0 = copy.deepcopy(env)
                 episode_step = 0
                 episode_rewards.append(0)
                 for a in agent_rewards:
@@ -270,6 +330,7 @@ def train(arglist):
                         train_step, len(episode_rewards), np.mean(episode_rewards[-arglist.save_rate:]),
                         cumulative_constraint_violations,
                         num_done, round(time.time()-t_start, 3)))
+                    print(trainers[0].safety_layer.num_call)
                 t_start = time.time()
                 num_done = 0
                 cumulative_constraint_violations = 0
