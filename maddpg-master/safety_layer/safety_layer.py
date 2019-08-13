@@ -192,7 +192,7 @@ class SafetyLayer:
         landmark_near = []
         for i, landmark in enumerate(environment.world.landmarks[0:-1]):
             dist = np.sqrt(np.sum(np.square(environment.world.policy_agents[0].state.p_pos - landmark.state.p_pos))) \
-                   - (environment.world.policy_agents[0].size + landmark.size) - 0.06
+                   - (environment.world.policy_agents[0].size + landmark.size) - 0.044
             if dist <= 0:
                 landmark_near.append(landmark)
                 flag = False
@@ -270,9 +270,10 @@ class SafetyLayer:
             k1 = temp2 * (x3[1] - self.x0[1])
             k2 = temp2 * (x3[0] - self.x0[0])
             k3 = temp2 * (self.x0[1] * x3[0] - self.x0[0] * x3[1])
+            dist = np.sqrt(np.sum(np.square(environment.world.landmarks[-1].state.p_pos - landmark.state.p_pos))) \
+                   - (environment.world.landmarks[-1].size + 1.2 * landmark.size)
             if temp2 > 0:
                 flag = False
-                landmark0 = landmark
                 break
         if flag:
             return action, False

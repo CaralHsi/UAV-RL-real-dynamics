@@ -3018,7 +3018,9 @@ steps: 749366, episodes: 18000, mean episode reward: -39.74921649941672, num_cum
 steps: 790865, episodes: 19000, mean episode reward: -39.77469897613758, num_cumulative_constraints: 90, num_done: 992, time: 127.952
 10816
 
-1629 / 19 = 85.73684210526316
-18808/989.89
+1629 / 19 = 85.73684210526316  add the terminal safety_layer_call cancellation 476/6 = 79.333333
+18808/989.89  add the terminal safety_layer_call cancellation 5943/6 = 990.5
+(1629 + 58 + 81 + 69)/22 = 83.5
+(18808 + 991 +988 + 990)/22 = 21777/22 = 989.8636
 
 
