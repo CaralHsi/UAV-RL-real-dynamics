@@ -188,6 +188,10 @@ class World(object):
             '''entity.state.p_vel += (p_force_agent[i][0] / entity.mass) * self.dt
             '''
             entity.state.omega += p_force_agent[i][1] * self.dt
+            if entity.state.omega > 0.24:
+                entity.state.omega = np.array([0.24])
+            if entity.state.omega < -0.24:
+                entity.state.omega = np.array([-0.24])
             entity.state.theta += entity.state.omega * self.dt
             '''if entity.max_speed is not None:
                 speed = np.sqrt(np.square(entity.state.p_vel[0]) + np.square(entity.state.p_vel[1]))  # current vel

@@ -18,6 +18,7 @@ class MultiAgentEnv(gym.Env):
 
         self.world = world
         self.agents = self.world.policy_agents
+        self.dist = np.sqrt(np.sum(np.square(self.agents[0].state.p_pos - self.world.landmarks[-1].state.p_pos)))
         self.action_last = [np.array([0, 0, 0, 0, 0])]
         # set required vectorized gym env property
         self.n = len(world.policy_agents)
@@ -107,12 +108,11 @@ class MultiAgentEnv(gym.Env):
         # record observation for each agent
         for i, agent in enumerate(self.agents):
             obs_n.append(self._get_obs(agent))
-            reward_n.append(self._get_reward(agent, self.action_last[i], action_n[i]))
+            reward_n.append(self._get_reward(agent, self.dist, action_n[i]))
             done_n.append(self._get_done(agent))
 
             info_n['n'].append(self._get_info(agent))
-
-        self.action_last = action_n
+        self.dist = np.sqrt(np.sum(np.square(self.agents[0].state.p_pos - self.world.landmarks[-1].state.p_pos)))
         # all agents get total reward in cooperative case
         reward = np.sum(reward_n)
         if self.shared_reward:
@@ -255,7 +255,7 @@ class MultiAgentEnv(gym.Env):
                 # import rendering only if we need it (and don't import for headless machines)
                 #from gym.envs.classic_control import rendering
                 from multiagent import rendering
-                self.viewers[i] = rendering.Viewer(700,700)
+                self.viewers[i] = rendering.Viewer(2100, 700)
 
         # create rendering geometry
         if self.render_geoms is None:
