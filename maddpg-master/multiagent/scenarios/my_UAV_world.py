@@ -169,7 +169,7 @@ class Scenario(BaseScenario):
         # target obs
         target = world.landmarks[-1]
         vector = (target.state.p_pos - agent.state.p_pos)/np.sqrt(np.sum(np.square(target.state.p_pos - agent.state.p_pos)))
-        if np.sqrt(np.sum(np.square(target.state.p_pos - agent.state.p_pos))) > 3:
+        if np.sqrt(np.sum(np.square(target.state.p_pos - agent.state.p_pos))) > 0:
             entity_pos.append(np.append(np.array([1, 0]), target.size))
         else:
             entity_pos.append(np.append(target.state.p_pos - agent.state.p_pos, target.size))
