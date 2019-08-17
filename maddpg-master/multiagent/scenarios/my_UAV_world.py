@@ -1,6 +1,7 @@
 import numpy as np
 from multiagent.core_UAV import World, Agent, Landmark
 from multiagent.scenario import BaseScenario
+import copy
 
 # hard constraints for dynamic and no-flying-zone
 
@@ -11,8 +12,8 @@ class Scenario(BaseScenario):
         # set any world properties first
         world.dim_c = 2
         num_agents = 1
-        self.num_district = np.int(24 / 3)
-        self.num_landmarks_district = [np.int(np.random.uniform(8, 11)) for i in range(self.num_district)]
+        self.num_district = np.int(18 / 3)
+        self.num_landmarks_district = [np.int(np.random.uniform(3, 11)) for i in range(self.num_district)]
         self.num_landmarks = np.sum(self.num_landmarks_district) + 1
         world.observing_range = 2
         world.min_corridor = 0.10
@@ -59,6 +60,7 @@ class Scenario(BaseScenario):
         for agent in world.agents:
             # initialize x and y
             agent.state.p_pos = np.squeeze(np.array([np.random.uniform(-1, -0.9, 1), np.random.uniform(-0.1, +0.1, 1)]))
+            agent.state.start = copy.deepcopy(agent.state.p_pos)
             # initialize v
             agent.state.p_vel = np.array([0.3])  # np.zeros(1)  # because the velocity is along the flying direction
             # initialize theta
@@ -67,7 +69,7 @@ class Scenario(BaseScenario):
             agent.state.c = np.zeros(world.dim_c)
             agent.done = False
         landmark = world.landmarks[-1]
-        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(8, 24, 1), np.random.uniform(-0.1, +0.1, 1)]))
+        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(8, 18, 1), np.random.uniform(-0.1, +0.1, 1)]))
         landmark.state.p_vel = np.zeros(world.dim_p)
         for num_d in range(self.num_district):
             done = 0
@@ -169,10 +171,12 @@ class Scenario(BaseScenario):
         # target obs
         target = world.landmarks[-1]
         vector = (target.state.p_pos - agent.state.p_pos)/np.sqrt(np.sum(np.square(target.state.p_pos - agent.state.p_pos)))
+        dis1 = np.sqrt(np.sum(np.square(agent.state.p_pos - world.landmarks[-1].state.p_pos)))
+        dis2 = np.sqrt(np.sum(np.square(agent.state.start - world.landmarks[-1].state.p_pos)))
         if np.sqrt(np.sum(np.square(target.state.p_pos - agent.state.p_pos))) > 0:
-            entity_pos.append(np.append(np.array([1, 0]), target.size))
+            entity_pos.append(np.append(np.array([1, 0]), dis1/dis2))
         else:
-            entity_pos.append(np.append(target.state.p_pos - agent.state.p_pos, target.size))
+            entity_pos.append(np.append(np.array([agent.state.p_pos[1], 0]), dis1/dis2))
 
         temp = np.concatenate([np.array([agent.size])] + [agent.state.p_vel] + [agent.state.p_pos] + [agent.state.theta] + [agent.state.omega]
                               + entity_pos + [vector])
