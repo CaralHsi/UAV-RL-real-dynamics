@@ -12,8 +12,8 @@ class Scenario(BaseScenario):
         # set any world properties first
         world.dim_c = 2
         num_agents = 1
-        self.num_district = np.int(18 / 3)
-        self.num_landmarks_district = [np.int(np.random.uniform(3, 11)) for i in range(self.num_district)]
+        self.num_district = np.int(12 / 3)
+        self.num_landmarks_district = [np.int(np.random.uniform(6, 16)) for i in range(self.num_district)]
         self.num_landmarks = np.sum(self.num_landmarks_district) + 1
         world.observing_range = 2
         world.min_corridor = 0.10
@@ -69,7 +69,7 @@ class Scenario(BaseScenario):
             agent.state.c = np.zeros(world.dim_c)
             agent.done = False
         landmark = world.landmarks[-1]
-        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(8, 18, 1), np.random.uniform(-0.1, +0.1, 1)]))
+        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(8, 12, 1), np.random.uniform(-0.1, +0.1, 1)]))
         landmark.state.p_vel = np.zeros(world.dim_p)
         for num_d in range(self.num_district):
             done = 0
@@ -89,7 +89,7 @@ class Scenario(BaseScenario):
                             break
                         landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(num_d * 3 + 0.5,
                                                                                       (num_d + 1) * 3 + 1.5, 1),
-                                                                    np.random.uniform(-5, +5, 1)]))
+                                                                    np.random.uniform(-10, +10, 1)]))
                         landmark.size = np.random.uniform(0.50, 0.85)
                         temp1 = []
                         temp2 = []
@@ -144,12 +144,12 @@ class Scenario(BaseScenario):
         dist = np.sqrt(np.sum(np.square(agent.state.p_pos - l.state.p_pos)))
         diff_dist = dist_last - dist
         rew = -10 * (agent.state.p_vel - diff_dist)
-
+        # rew -= agent.state.p_pos[1]
         # collision punishment
         if agent.collide:
             for a in world.landmarks[0:-1]:
                 if self.is_collision(a, agent):
-                    rew -= 7
+                    rew -= 8
         rew /= world.landmarks[-1].state.p_pos[0]
         return rew
 

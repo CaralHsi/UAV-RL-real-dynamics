@@ -32,13 +32,13 @@ def parse_args():
     parser = argparse.ArgumentParser("Reinforcement Learning experiments for multiagent environments")
     # Environment
     parser.add_argument("--scenario", type=str, default="my_UAV_world", help="name of the scenario script")
-    parser.add_argument("--max-episode-len", type=int, default=120, help="maximum episode length")
+    parser.add_argument("--max-episode-len", type=int, default=180, help="maximum episode length")
     parser.add_argument("--num-episodes", type=int, default=600000, help="number of episodes")
     parser.add_argument("--num-adversaries", type=int, default=1, help="number of adversaries")
     parser.add_argument("--good-policy", type=str, default="maddpg", help="policy for good agents")
     parser.add_argument("--adv-policy", type=str, default="maddpg", help="policy of adversaries")
     # Core training parameters
-    parser.add_argument("--lr", type=float, default=1 * 1e-2, help="learning rate for Adam optimizer")
+    parser.add_argument("--lr", type=float, default=0.5 * 1e-2, help="learning rate for Adam optimizer")
     parser.add_argument("--gamma", type=float, default=0.95, help="discount factor")
     parser.add_argument("--batch-size", type=int, default=1024, help="number of episodes to optimize at the same time")
     parser.add_argument("--num-units", type=int, default=64, help="number of units in the mlp")
@@ -252,7 +252,7 @@ def train(arglist):
                 '''np.savetxt("data_save.txt", data_save)'''  # 缺省按照'%.18e'格式保存数据，以空格分隔
 
                 # plot x, y, v, theta
-                a = data_save
+                '''a = data_save
                 V = a[:, 1]
                 x = a[:, 2]
                 y = a[:, 3]
@@ -266,17 +266,22 @@ def train(arglist):
                     r = landmark.size
                     circle = mpathes.Circle(p_pos, r)
                     ax0.add_patch(circle)
+                for i in range(len(x)):
+                    p_pos = np.array([x[i], y[i]])
+                    r = env.world.agents[0].size
+                    circle = mpathes.Circle(p_pos, r)
+                    ax0.add_patch(circle)
                 ax0.set_xlim((-1, 20))
-                ax0.set_ylim((-5.3, 5.3))
+                ax0.set_ylim((-10.3, 10.3))
                 ax0.axis('equal')
                 ax0.set_title("x-y")
                 x1 = [-1, 20]
-                y1 = [5.3, 5.3]
-                y2 = [-5.3, -5.3]
+                y1 = [10.3, 10.3]
+                y2 = [-10.3, -10.3]
                 ax0.plot(x1, y1)
                 ax0.plot(x1, y2)
-                plt.show()
-                fig, ax = plt.subplots(ncols=2, nrows=2)
+                plt.show()'''
+                '''fig, ax = plt.subplots(ncols=2, nrows=2)
                 for i, landmark in enumerate(env.world.landmarks):
                     p_pos = landmark.state.p_pos
                     r = landmark.size
@@ -288,7 +293,7 @@ def train(arglist):
                     circle = mpathes.Circle(p_pos, r)
                     ax[0, 0].add_patch(circle)
                 ax[0, 0].set_xlim((-1, 20))
-                ax[0, 0].set_ylim((-5.3, 5.3))
+                ax[0, 0].set_ylim((-10.3, 10.3))
                 ax[0, 0].set_title("x-y")
                 ax[0, 0].axis('equal')
                 ax[0, 1].plot(theta)
@@ -297,7 +302,7 @@ def train(arglist):
                 ax[1, 0].set_title("omega")
                 # ax[1, 1].plot(action_n * 0.12)
                 # ax[1, 1].set_title("action_n")
-                plt.show()
+                plt.show()'''
 
                 # reset and continue
                 data_save = []
