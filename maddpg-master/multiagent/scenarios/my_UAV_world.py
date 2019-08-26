@@ -12,10 +12,10 @@ class Scenario(BaseScenario):
         # set any world properties first
         world.dim_c = 2
         num_agents = 1
-        self.num_district = np.int(12 / 3)
-        self.num_landmarks_district = [np.int(np.random.uniform(6, 16)) for i in range(self.num_district)]
+        self.num_district = np.int(18 / 3)
+        self.num_landmarks_district = [np.int(np.random.uniform(8, 16)) for i in range(self.num_district)]
         self.num_landmarks = np.sum(self.num_landmarks_district) + 1
-        world.observing_range = 2
+        world.observing_range = 3
         world.min_corridor = 0.10
         world.collaborative = True
         # add agents
@@ -69,7 +69,7 @@ class Scenario(BaseScenario):
             agent.state.c = np.zeros(world.dim_c)
             agent.done = False
         landmark = world.landmarks[-1]
-        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(8, 12, 1), np.random.uniform(-0.1, +0.1, 1)]))
+        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(5, 18, 1), np.random.uniform(-0.1, +0.1, 1)]))
         landmark.state.p_vel = np.zeros(world.dim_p)
         for num_d in range(self.num_district):
             done = 0
@@ -149,7 +149,7 @@ class Scenario(BaseScenario):
         if agent.collide:
             for a in world.landmarks[0:-1]:
                 if self.is_collision(a, agent):
-                    rew -= 8
+                    rew -= 10
         rew /= world.landmarks[-1].state.p_pos[0]
         return rew
 
@@ -185,7 +185,7 @@ class Scenario(BaseScenario):
     def done(self, agent, world):
         target_landmark = world.landmarks[-1]
         dis = np.sqrt(np.sum(np.square(agent.state.p_pos - target_landmark.state.p_pos)))
-        if dis <= agent.size + target_landmark.size + 0.05:
+        if dis <= agent.size + target_landmark.size + 0.10:  # should be 0.05
             return True
         return False
 

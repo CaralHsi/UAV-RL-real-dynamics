@@ -27,6 +27,7 @@ import maddpg.common.tf_util as U
 from maddpg.trainer.maddpg import MADDPGAgentTrainer
 import tensorflow.contrib.layers as layers
 from safety_layer.safety_layer import SafetyLayer
+from safety_layer.MPC_layer import MpcLayer
 
 def parse_args():
     parser = argparse.ArgumentParser("Reinforcement Learning experiments for multiagent environments")
@@ -42,7 +43,8 @@ def parse_args():
     parser.add_argument("--gamma", type=float, default=0.95, help="discount factor")
     parser.add_argument("--batch-size", type=int, default=1024, help="number of episodes to optimize at the same time")
     parser.add_argument("--num-units", type=int, default=64, help="number of units in the mlp")
-    parser.add_argument("--use-safety-layer", action="store_true", default=True)
+    parser.add_argument("--use-safety-layer", action="store_true", default=False, help="whether use safety_layer")
+    parser.add_argument("--use-mpc-layer", action="store_true", default=True, help="whether use MPC_layer")
     # Checkpointing
     parser.add_argument("--exp-name", type=str, default=None, help="name of the experiment")
     parser.add_argument("--save-dir", type=str, default="./ckpt_my_UAV_world_6_landmarks_safety_layer/test.ckpt", help="directory in which training state and model should be saved")
@@ -126,10 +128,14 @@ def train(arglist):
             safety_layer = SafetyLayer(env, len(env.world.landmarks) - 1, mlp_model_safety_layer,
                                        env.observation_space[0].shape,
                                        env.action_space, trainers[0].action)
-            # safety_layer.train()
+            # set safety_layer for trainer[0]
+            trainers[0].set_safety_layer(safety_layer)
+        if arglist.use_mpc_layer:
+            safety_layer = MpcLayer(env)
+            # set safety_layer for trainer[0]
+            trainers[0].set_safety_layer(safety_layer)
 
-        # set safety_layer for trainer[0]
-        trainers[0].set_safety_layer(safety_layer)
+
 
         # Initialize
         U.initialize()
@@ -185,50 +191,6 @@ def train(arglist):
             # environment step
             new_obs_n, rew_n, done_n, info_n = env.step(action_n)
             is_any_collision_new = env.is_any_collision()
-            '''if if_call[0] and is_any_collision_new[0]:
-                file_path = open('env.pkl', 'wb')
-                import pickle
-                for i in range(len(env0.world.landmarks)):
-                    pickle.dump(env0.world.landmarks[i], file_path)
-                for i in range(len(env0.world.agents)):
-                    pickle.dump(env0.world.agents[i], file_path)
-                file_path.close()
-                data_save1 = np.array(data_save)
-
-                # plot x, y, v, theta
-                a = data_save1
-                V = a[:, 0]
-                x = a[:, 1]
-                x = np.append(x, new_obs_n[0][1])
-                y = a[:, 2]
-                y = np.append(y, new_obs_n[0][2])
-                theta = a[:, 3]
-                omega = a[:, 4]
-                action_n = a[:, 26] - a[:, 27]
-                action_real = a[:, 31] - a[:, 32]
-                fig, ax = plt.subplots(ncols=2, nrows=2)
-                for i, landmark in enumerate(env.world.landmarks):
-                    p_pos = landmark.state.p_pos
-                    r = landmark.size
-                    circle = mpathes.Circle(p_pos, r)
-                    ax[0, 0].add_patch(circle)
-                for i in range(len(x)):
-                    p_pos = np.array([x[i], y[i]])
-                    r = env.world.agents[0].size
-                    circle = mpathes.Circle(p_pos, r)
-                    ax[0, 0].add_patch(circle)
-                # ax[0, 0].plot(x, y)
-                ax[0, 0].set_xlim((-1, 1))
-                ax[0, 0].set_ylim((-1, 1))
-                ax[0, 0].set_title("x-y")
-                ax[0, 0].axis('equal')
-                ax[0, 1].plot(theta)
-                ax[0, 1].set_title("theta")
-                ax[1, 0].plot(omega)
-                ax[1, 0].set_title("omega")
-                ax[1, 1].plot(action_n * 0.12)
-                ax[1, 1].set_title("action_n")
-                plt.show()'''
             # new c_n
             # new_c_n = env.get_constraint_values()
             episode_step += 1
@@ -271,11 +233,11 @@ def train(arglist):
                     r = env.world.agents[0].size
                     circle = mpathes.Circle(p_pos, r)
                     ax0.add_patch(circle)
-                ax0.set_xlim((-1, 20))
+                ax0.set_xlim((-1, 40))
                 ax0.set_ylim((-10.3, 10.3))
                 ax0.axis('equal')
                 ax0.set_title("x-y")
-                x1 = [-1, 20]
+                x1 = [-1, 40]
                 y1 = [10.3, 10.3]
                 y2 = [-10.3, -10.3]
                 ax0.plot(x1, y1)

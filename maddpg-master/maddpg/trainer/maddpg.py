@@ -6,6 +6,7 @@ import maddpg.common.tf_util as U
 from maddpg.common.distributions import make_pdtype
 from maddpg import AgentTrainer
 from maddpg.trainer.replay_buffer import ReplayBuffer
+import copy
 
 
 def discount_with_dones(rewards, dones, gamma):
@@ -153,17 +154,40 @@ class MADDPGAgentTrainer(AgentTrainer):
     def action(self, obs, c=None, env=None):
         action = self.act(obs[None])[0]
         if_call = False
-        if self.safety_layer and c is not None and env is not None:
-            action, if_call = self.safety_layer.get_safe_action(obs, action, c, env)
-
         return action, if_call
 
     def action_real(self, obs, c=None, env=None):
+        # get action from DDPG
         action = self.act(obs[None])[0]
         action_real = action
         if_call = False
-        '''if self.safety_layer and c is not None and env is not None:
-            action, if_call = self.safety_layer.get_safe_action(obs, action, env)'''
+
+        # judge the collision in future 10 steps
+        collision_flag = False
+        env_future = copy.deepcopy(env)
+        obs_future = copy.deepcopy(obs)
+        trajectory = np.zeros([2, self.safety_layer.UAV_config.N + 1])
+        trajectory[0, 0] = obs_future[2]
+        trajectory[1, 0] = obs_future[3]
+        for i in range(self.safety_layer.UAV_config.N):
+            action_future = [self.act(obs_future[None])[0]]
+            # environment step
+            new_obs_n, rew_n, done_n, info_n = env_future.step(action_future)
+            is_any_collision = env_future.is_any_collision()
+            if env_future.is_any_collision()[0]:
+                collision_flag = True
+            done_future = all(done_n)
+            if done_future:
+                break
+            obs_future = new_obs_n[0]
+            trajectory[0, i + 1] = obs_future[2]
+            trajectory[1, i + 1] = obs_future[3]
+        if not collision_flag:
+            return action_real, action, if_call
+
+        # call for the safety_layer
+        if self.safety_layer and c is not None and env is not None:
+            action, if_call = self.safety_layer.get_safe_action(obs, action, trajectory)
         return action_real, action, if_call
 
     def set_safety_layer(self, safety_layer):

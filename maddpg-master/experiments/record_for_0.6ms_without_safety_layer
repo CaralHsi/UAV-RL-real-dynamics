@@ -393,3 +393,271 @@ steps: 329284, episodes: 8000, mean episode reward: -14.46026934086339, num_cumu
 0
 steps: 370491, episodes: 9000, mean episode reward: -14.045859669771692, num_cumulative_constraints: 2178, num_done: 999, time: 225.875
 0
+
+18
+steps: 51775, episodes: 1000, mean episode reward: -14.524782634802866, num_cumulative_constraints: 4254, num_done: 997, time: 575.814
+0
+steps: 104302, episodes: 2000, mean episode reward: -14.769995522599482, num_cumulative_constraints: 4232, num_done: 993, time: 556.846
+0
+steps: 156567, episodes: 3000, mean episode reward: -14.667171960143367, num_cumulative_constraints: 4440, num_done: 997, time: 575.432
+0
+steps: 208422, episodes: 4000, mean episode reward: -14.87759591093622, num_cumulative_constraints: 4356, num_done: 992, time: 580.494
+0
+steps: 259816, episodes: 5000, mean episode reward: -13.989028074034174, num_cumulative_constraints: 3539, num_done: 998, time: 580.249
+0
+steps: 310802, episodes: 6000, mean episode reward: -13.70026872018753, num_cumulative_constraints: 3131, num_done: 998, time: 584.339
+0
+steps: 362600, episodes: 7000, mean episode reward: -13.970091192104267, num_cumulative_constraints: 3243, num_done: 993, time: 589.116
+0
+steps: 413815, episodes: 8000, mean episode reward: -13.67386082510529, num_cumulative_constraints: 2910, num_done: 996, time: 577.61
+0
+steps: 464943, episodes: 9000, mean episode reward: -13.416230899964734, num_cumulative_constraints: 2668, num_done: 994, time: 579.539
+0
+steps: 516427, episodes: 10000, mean episode reward: -13.427380213113654, num_cumulative_constraints: 2716, num_done: 994, time: 586.201
+0
+steps: 568370, episodes: 11000, mean episode reward: -13.847548436268097, num_cumulative_constraints: 2915, num_done: 995, time: 586.585
+0
+steps: 620060, episodes: 12000, mean episode reward: -13.786707340650926, num_cumulative_constraints: 2924, num_done: 996, time: 582.081
+0
+steps: 670969, episodes: 13000, mean episode reward: -13.540242369737229, num_cumulative_constraints: 2782, num_done: 998, time: 579.791
+0
+steps: 721854, episodes: 14000, mean episode reward: -13.595414114053295, num_cumulative_constraints: 2833, num_done: 997, time: 576.672
+0
+steps: 773543, episodes: 15000, mean episode reward: -13.878347531239214, num_cumulative_constraints: 2908, num_done: 992, time: 586.576
+0
+steps: 824499, episodes: 16000, mean episode reward: -13.6000782741475, num_cumulative_constraints: 2807, num_done: 993, time: 577.179
+0
+steps: 875273, episodes: 17000, mean episode reward: -13.323710637962176, num_cumulative_constraints: 2721, num_done: 995, time: 581.897
+0
+steps: 925996, episodes: 18000, mean episode reward: -13.303236640806661, num_cumulative_constraints: 2502, num_done: 996, time: 577.01
+0
+steps: 977164, episodes: 19000, mean episode reward: -13.506982899267197, num_cumulative_constraints: 2780, num_done: 996, time: 579.954
+0
+steps: 1028644, episodes: 20000, mean episode reward: -13.77986939700669, num_cumulative_constraints: 2984, num_done: 993, time: 585.41
+0
+steps: 1079275, episodes: 21000, mean episode reward: -13.74572609514089, num_cumulative_constraints: 2946, num_done: 996, time: 571.932
+0
+steps: 1130443, episodes: 22000, mean episode reward: -13.74580268905947, num_cumulative_constraints: 3121, num_done: 995, time: 581.876
+0
+steps: 1181523, episodes: 23000, mean episode reward: -13.66407969682695, num_cumulative_constraints: 2943, num_done: 997, time: 578.566
+0
+steps: 1232795, episodes: 24000, mean episode reward: -13.826239151589023, num_cumulative_constraints: 3071, num_done: 994, time: 585.565
+0
+steps: 1282840, episodes: 25000, mean episode reward: -13.60595848605161, num_cumulative_constraints: 2933, num_done: 997, time: 571.245
+0
+steps: 1333465, episodes: 26000, mean episode reward: -13.50945060595058, num_cumulative_constraints: 2921, num_done: 997, time: 573.24
+0
+steps: 1384037, episodes: 27000, mean episode reward: -13.540402947667856, num_cumulative_constraints: 2863, num_done: 993, time: 562.23
+0
+steps: 1434317, episodes: 28000, mean episode reward: -13.164557136794071, num_cumulative_constraints: 2618, num_done: 1000, time: 558.314
+0
+steps: 1485418, episodes: 29000, mean episode reward: -13.571101033909672, num_cumulative_constraints: 2942, num_done: 995, time: 568.464
+0
+steps: 1536034, episodes: 30000, mean episode reward: -13.481401093612726, num_cumulative_constraints: 2899, num_done: 996, time: 564.512
+0
+steps: 1587104, episodes: 31000, mean episode reward: -13.529277816310682, num_cumulative_constraints: 2938, num_done: 992, time: 10183.627
+0
+
+steps: 67722, episodes: 1000, mean episode reward: -12.281807548463664, num_cumulative_constraints: 2718, num_done: 989, time: 278.95
+0
+steps: 137004, episodes: 2000, mean episode reward: -12.7729253543585, num_cumulative_constraints: 3240, num_done: 976, time: 292.556
+0
+steps: 206440, episodes: 3000, mean episode reward: -12.62023516981366, num_cumulative_constraints: 3044, num_done: 980, time: 292.566
+0
+steps: 275054, episodes: 4000, mean episode reward: -12.51645016246309, num_cumulative_constraints: 2527, num_done: 981, time: 293.85
+0
+steps: 342379, episodes: 5000, mean episode reward: -12.19458921903421, num_cumulative_constraints: 1945, num_done: 989, time: 287.176
+0
+steps: 411073, episodes: 6000, mean episode reward: -12.293532065234581, num_cumulative_constraints: 2205, num_done: 987, time: 300.095
+0
+
+add safety layer
+steps: 114075, episodes: 1000, mean episode reward: -13.698032346056602, num_cumulative_constraints: 9126, num_done: 937, time: 1063.362
+326
+steps: 229492, episodes: 2000, mean episode reward: -13.775901688762282, num_cumulative_constraints: 9094, num_done: 907, time: 1109.234
+649
+steps: 340874, episodes: 3000, mean episode reward: -12.86225299656374, num_cumulative_constraints: 6787, num_done: 965, time: 1123.387
+927
+steps: 449897, episodes: 4000, mean episode reward: -12.476050575026475, num_cumulative_constraints: 5813, num_done: 987, time: 1073.475
+1220
+steps: 559532, episodes: 5000, mean episode reward: -12.398642921418737, num_cumulative_constraints: 5342, num_done: 989, time: 1087.462
+1488
+steps: 671291, episodes: 6000, mean episode reward: -12.522203416646276, num_cumulative_constraints: 5501, num_done: 990, time: 1110.173
+1744
+steps: 783129, episodes: 7000, mean episode reward: -12.632923149215625, num_cumulative_constraints: 5814, num_done: 987, time: 1195.382
+1983
+steps: 894986, episodes: 8000, mean episode reward: -12.582709985630235, num_cumulative_constraints: 5555, num_done: 990, time: 1356.688
+2237
+steps: 1006647, episodes: 9000, mean episode reward: -12.603175945338121, num_cumulative_constraints: 5536, num_done: 993, time: 1155.434
+2447
+steps: 1118932, episodes: 10000, mean episode reward: -12.646859505980432, num_cumulative_constraints: 5553, num_done: 994, time: 1131.401
+2720
+steps: 1230802, episodes: 11000, mean episode reward: -12.596774716014403, num_cumulative_constraints: 5437, num_done: 991, time: 1119.179
+3026
+steps: 1341686, episodes: 12000, mean episode reward: -12.373558778478326, num_cumulative_constraints: 5093, num_done: 993, time: 1108.182
+3357
+steps: 1451341, episodes: 13000, mean episode reward: -12.259097105680256, num_cumulative_constraints: 4843, num_done: 992, time: 1099.013
+3621
+steps: 1560250, episodes: 14000, mean episode reward: -12.196738784058997, num_cumulative_constraints: 4715, num_done: 999, time: 1097.339
+3919
+steps: 1669960, episodes: 15000, mean episode reward: -12.150750687579851, num_cumulative_constraints: 4704, num_done: 996, time: 1098.816
+4170
+steps: 1780374, episodes: 16000, mean episode reward: -12.21701733273055, num_cumulative_constraints: 4790, num_done: 997, time: 1108.866
+4448
+steps: 1889703, episodes: 17000, mean episode reward: -12.209459370717227, num_cumulative_constraints: 4710, num_done: 998, time: 1096.933
+4689
+steps: 2000118, episodes: 18000, mean episode reward: -12.262108401747104, num_cumulative_constraints: 4791, num_done: 994, time: 1115.336
+4967
+steps: 2110253, episodes: 19000, mean episode reward: -12.239357259438444, num_cumulative_constraints: 4598, num_done: 991, time: 1108.258
+5215
+steps: 2220963, episodes: 20000, mean episode reward: -12.235775959790379, num_cumulative_constraints: 4479, num_done: 995, time: 1113.376
+5462
+steps: 2331481, episodes: 21000, mean episode reward: -12.236239446814555, num_cumulative_constraints: 4376, num_done: 995, time: 1112.761
+5721
+steps: 2442574, episodes: 22000, mean episode reward: -12.385353673174059, num_cumulative_constraints: 4824, num_done: 988, time: 1111.801
+6001
+steps: 2553808, episodes: 23000, mean episode reward: -12.356972304312515, num_cumulative_constraints: 4769, num_done: 988, time: 1116.428
+6298
+steps: 2665383, episodes: 24000, mean episode reward: -12.492656924992337, num_cumulative_constraints: 5072, num_done: 985, time: 1121.299
+6600
+steps: 2777227, episodes: 25000, mean episode reward: -12.688574075470983, num_cumulative_constraints: 5515, num_done: 983, time: 1113.37
+6897
+steps: 2888724, episodes: 26000, mean episode reward: -12.47584774429565, num_cumulative_constraints: 4968, num_done: 987, time: 1118.601
+7139
+steps: 3001091, episodes: 27000, mean episode reward: -12.472465285864267, num_cumulative_constraints: 4926, num_done: 992, time: 1126.445
+7363
+steps: 3112626, episodes: 28000, mean episode reward: -12.418351123271554, num_cumulative_constraints: 4698, num_done: 984, time: 1117.152
+7612
+steps: 3225040, episodes: 29000, mean episode reward: -12.44394160513703, num_cumulative_constraints: 4727, num_done: 989, time: 1129.132
+7916
+steps: 3337389, episodes: 30000, mean episode reward: -12.534154646066511, num_cumulative_constraints: 4790, num_done: 983, time: 1126.011
+8114
+steps: 3450174, episodes: 31000, mean episode reward: -12.52474083059266, num_cumulative_constraints: 4919, num_done: 987, time: 1129.383
+8355
+steps: 3562043, episodes: 32000, mean episode reward: -12.446389977544941, num_cumulative_constraints: 4819, num_done: 995, time: 1120.858
+8613
+steps: 3674077, episodes: 33000, mean episode reward: -12.4586604731543, num_cumulative_constraints: 4846, num_done: 988, time: 1128.411
+8878
+steps: 3784858, episodes: 34000, mean episode reward: -12.305184058042476, num_cumulative_constraints: 4525, num_done: 995, time: 1108.119
+9127
+
+
+18
+steps: 143187, episodes: 3000, mean episode reward: -16.33601807759902, num_cumulative_constraints: 3785, num_done: 1000, time: 242.74
+0
+steps: 191800, episodes: 4000, mean episode reward: -16.824911460582438, num_cumulative_constraints: 3997, num_done: 996, time: 234.121
+0
+steps: 240471, episodes: 5000, mean episode reward: -16.48279388473086, num_cumulative_constraints: 3840, num_done: 999, time: 244.643
+0
+steps: 287124, episodes: 6000, mean episode reward: -15.01629039415057, num_cumulative_constraints: 3417, num_done: 1000, time: 240.588
+0
+steps: 332332, episodes: 7000, mean episode reward: -15.227797366546774, num_cumulative_constraints: 3346, num_done: 999, time: 232.249
+0
+steps: 378450, episodes: 8000, mean episode reward: -15.655820811647219, num_cumulative_constraints: 4020, num_done: 999, time: 237.342
+0
+steps: 424829, episodes: 9000, mean episode reward: -15.78206380934297, num_cumulative_constraints: 3801, num_done: 997, time: 238.991
+0
+steps: 471165, episodes: 10000, mean episode reward: -15.111474359412178, num_cumulative_constraints: 3455, num_done: 997, time: 231.53
+0
+steps: 516038, episodes: 11000, mean episode reward: -14.607854489468297, num_cumulative_constraints: 3252, num_done: 999, time: 232.069
+0
+steps: 559651, episodes: 12000, mean episode reward: -14.152432276515736, num_cumulative_constraints: 2976, num_done: 1000, time: 245.392
+0
+steps: 604473, episodes: 13000, mean episode reward: -14.597446399503552, num_cumulative_constraints: 3400, num_done: 1000, time: 245.446
+0
+steps: 648518, episodes: 14000, mean episode reward: -14.394357218905226, num_cumulative_constraints: 3150, num_done: 1000, time: 240.138
+0
+steps: 692201, episodes: 15000, mean episode reward: -14.307620290202799, num_cumulative_constraints: 2945, num_done: 1000, time: 238.114
+0
+steps: 737289, episodes: 16000, mean episode reward: -14.398304763058558, num_cumulative_constraints: 3109, num_done: 1000, time: 247.288
+0
+steps: 781260, episodes: 17000, mean episode reward: -14.014324426884823, num_cumulative_constraints: 2954, num_done: 1000, time: 237.555
+0
+steps: 824488, episodes: 18000, mean episode reward: -14.157783459770654, num_cumulative_constraints: 2920, num_done: 1000, time: 232.654
+0
+steps: 868593, episodes: 19000, mean episode reward: -14.047273160861035, num_cumulative_constraints: 2942, num_done: 1000, time: 247.579
+0
+steps: 912854, episodes: 20000, mean episode reward: -14.055051966914858, num_cumulative_constraints: 2981, num_done: 1000, time: 235.024
+0
+steps: 956922, episodes: 21000, mean episode reward: -14.1908948328117, num_cumulative_constraints: 3181, num_done: 1000, time: 241.807
+0
+steps: 1001441, episodes: 22000, mean episode reward: -14.182539753291747, num_cumulative_constraints: 3128, num_done: 1000, time: 237.166
+0
+steps: 1045426, episodes: 23000, mean episode reward: -14.126623496711268, num_cumulative_constraints: 2900, num_done: 1000, time: 226.334
+0
+steps: 1089732, episodes: 24000, mean episode reward: -14.221398136705664, num_cumulative_constraints: 3008, num_done: 999, time: 224.017
+0
+steps: 1133961, episodes: 25000, mean episode reward: -14.110006020785834, num_cumulative_constraints: 3050, num_done: 1000, time: 227.173
+0
+steps: 1177991, episodes: 26000, mean episode reward: -14.250360598650943, num_cumulative_constraints: 2985, num_done: 1000, time: 237.642
+0
+steps: 1222729, episodes: 27000, mean episode reward: -14.356688708766617, num_cumulative_constraints: 2995, num_done: 999, time: 238.839
+0
+steps: 1266842, episodes: 28000, mean episode reward: -14.14264276828449, num_cumulative_constraints: 2826, num_done: 997, time: 236.228
+0
+steps: 1310732, episodes: 29000, mean episode reward: -14.2683465818433, num_cumulative_constraints: 3012, num_done: 998, time: 227.769
+0
+steps: 1355203, episodes: 30000, mean episode reward: -13.991484147458454, num_cumulative_constraints: 2774, num_done: 1000, time: 240.764
+0
+steps: 1399487, episodes: 31000, mean episode reward: -14.273856168136627, num_cumulative_constraints: 2815, num_done: 997, time: 221.874
+0
+steps: 1444184, episodes: 32000, mean episode reward: -14.232931747376659, num_cumulative_constraints: 2799, num_done: 997, time: 262.48
+0
+steps: 1489305, episodes: 33000, mean episode reward: -14.051950201497554, num_cumulative_constraints: 2782, num_done: 999, time: 240.186
+0
+steps: 1533493, episodes: 34000, mean episode reward: -14.058489223900597, num_cumulative_constraints: 2694, num_done: 999, time: 254.866
+0
+steps: 1578963, episodes: 35000, mean episode reward: -14.577542414091567, num_cumulative_constraints: 2925, num_done: 995, time: 231.415
+0
+steps: 1623617, episodes: 36000, mean episode reward: -14.39282395932476, num_cumulative_constraints: 2799, num_done: 996, time: 226.906
+0
+steps: 1667986, episodes: 37000, mean episode reward: -14.00989907395482, num_cumulative_constraints: 2569, num_done: 999, time: 252.314
+0
+steps: 1712465, episodes: 38000, mean episode reward: -14.519554688925714, num_cumulative_constraints: 2827, num_done: 997, time: 237.071
+0
+steps: 1756273, episodes: 39000, mean episode reward: -13.629007477477224, num_cumulative_constraints: 2265, num_done: 999, time: 242.65
+0
+steps: 1800183, episodes: 40000, mean episode reward: -13.592937725938487, num_cumulative_constraints: 2350, num_done: 998, time: 245.215
+0
+steps: 1843503, episodes: 41000, mean episode reward: -13.751110469824203, num_cumulative_constraints: 2293, num_done: 998, time: 241.061
+0
+steps: 1888141, episodes: 42000, mean episode reward: -14.132827464337403, num_cumulative_constraints: 2649, num_done: 997, time: 234.834
+0
+steps: 1933753, episodes: 43000, mean episode reward: -14.767200211087976, num_cumulative_constraints: 2763, num_done: 994, time: 253.208
+0
+steps: 1977709, episodes: 44000, mean episode reward: -13.879490508860156, num_cumulative_constraints: 2446, num_done: 999, time: 239.125
+0
+steps: 2021420, episodes: 45000, mean episode reward: -13.845902692251322, num_cumulative_constraints: 2491, num_done: 998, time: 243.568
+0
+steps: 2065589, episodes: 46000, mean episode reward: -13.792812553986227, num_cumulative_constraints: 2401, num_done: 998, time: 242.258
+0
+steps: 2108604, episodes: 47000, mean episode reward: -13.65178815753659, num_cumulative_constraints: 2321, num_done: 999, time: 230.333
+0
+steps: 2152987, episodes: 48000, mean episode reward: -13.721421510630986, num_cumulative_constraints: 2494, num_done: 1000, time: 231.799
+0
+steps: 2197267, episodes: 49000, mean episode reward: -13.646405214485528, num_cumulative_constraints: 2322, num_done: 999, time: 227.501
+0
+steps: 2241373, episodes: 50000, mean episode reward: -13.877042710301861, num_cumulative_constraints: 2483, num_done: 999, time: 223.281
+0
+steps: 2285046, episodes: 51000, mean episode reward: -13.594997841780138, num_cumulative_constraints: 2345, num_done: 1000, time: 225.188
+0
+steps: 2329511, episodes: 52000, mean episode reward: -13.632050271835107, num_cumulative_constraints: 2427, num_done: 999, time: 231.344
+0
+steps: 2374117, episodes: 53000, mean episode reward: -14.400699636551286, num_cumulative_constraints: 2600, num_done: 996, time: 240.292
+0
+steps: 2419707, episodes: 54000, mean episode reward: -13.816980271274463, num_cumulative_constraints: 2512, num_done: 996, time: 229.846
+0
+steps: 2463247, episodes: 55000, mean episode reward: -13.741095484874045, num_cumulative_constraints: 2347, num_done: 998, time: 223.974
+0
+steps: 2506479, episodes: 56000, mean episode reward: -13.760597656546627, num_cumulative_constraints: 2355, num_done: 999, time: 222.223
+0
+steps: 2550718, episodes: 57000, mean episode reward: -13.822173390140874, num_cumulative_constraints: 2383, num_done: 998, time: 220.947
+0
+steps: 2594351, episodes: 58000, mean episode reward: -13.86414379530132, num_cumulative_constraints: 2371, num_done: 999, time: 224.765
+0
+steps: 2638888, episodes: 59000, mean episode reward: -13.938523988204713, num_cumulative_constraints: 2381, num_done: 998, time: 226.207
+0
+steps: 2682973, episodes: 60000, mean episode reward: -13.477550011882904, num_cumulative_constraints: 2250, num_done: 1000, time: 226.594
+0
+steps: 2726029, episodes: 61000, mean episode reward: -13.422868010951325, num_cumulative_constraints: 2181, num_done: 1000, time: 242.772
+0
