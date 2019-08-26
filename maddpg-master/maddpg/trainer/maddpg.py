@@ -161,32 +161,36 @@ class MADDPGAgentTrainer(AgentTrainer):
         action = self.act(obs[None])[0]
         action_real = action
         if_call = False
-
-        # judge the collision in future 10 steps
-        collision_flag = False
-        env_future = copy.deepcopy(env)
-        obs_future = copy.deepcopy(obs)
-        trajectory = np.zeros([2, self.safety_layer.UAV_config.N + 1])
-        trajectory[0, 0] = obs_future[2]
-        trajectory[1, 0] = obs_future[3]
-        for i in range(self.safety_layer.UAV_config.N):
-            action_future = [self.act(obs_future[None])[0]]
-            # environment step
-            new_obs_n, rew_n, done_n, info_n = env_future.step(action_future)
-            is_any_collision = env_future.is_any_collision()
-            if env_future.is_any_collision()[0]:
-                collision_flag = True
-            done_future = all(done_n)
-            if done_future:
-                break
-            obs_future = new_obs_n[0]
-            trajectory[0, i + 1] = obs_future[2]
-            trajectory[1, i + 1] = obs_future[3]
-        if not collision_flag:
-            return action_real, action, if_call
+        dist = np.sqrt(np.sum(np.square(env.agents[0].state.p_pos - env.world.landmarks[-1].state.p_pos)))
 
         # call for the safety_layer
-        if self.safety_layer and c is not None and env is not None:
+        if self.safety_layer and c is not None and env is not None and dist > 1.5:
+            # judge the collision in future 10 steps
+            collision_flag = False
+            env_future = copy.deepcopy(env)
+            obs_future = copy.deepcopy(obs)
+            trajectory = np.zeros([4, self.safety_layer.UAV_config.N + 1])
+            trajectory[0, 0] = obs_future[2]
+            trajectory[1, 0] = obs_future[3]
+            trajectory[2, 0] = obs_future[4]
+            trajectory[3, 0] = obs_future[5]
+            for i in range(self.safety_layer.UAV_config.N):
+                action_future = [self.act(obs_future[None])[0]]
+                # environment step
+                new_obs_n, rew_n, done_n, info_n = env_future.step(action_future)
+                is_any_collision = env_future.is_any_collision()
+                if env_future.is_any_collision()[0]:
+                    collision_flag = True
+                done_future = all(done_n)
+                if done_future:
+                    break
+                obs_future = new_obs_n[0]
+                trajectory[0, i + 1] = obs_future[2]
+                trajectory[1, i + 1] = obs_future[3]
+                trajectory[2, i + 1] = obs_future[4]
+                trajectory[3, i + 1] = obs_future[5]
+            if not collision_flag:
+                return action_real, action, if_call
             action, if_call = self.safety_layer.get_safe_action(obs, action, trajectory)
         return action_real, action, if_call
 

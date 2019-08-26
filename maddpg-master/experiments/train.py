@@ -27,13 +27,13 @@ import maddpg.common.tf_util as U
 from maddpg.trainer.maddpg import MADDPGAgentTrainer
 import tensorflow.contrib.layers as layers
 from safety_layer.safety_layer import SafetyLayer
-from safety_layer.MPC_layer import MpcLayer
+from safety_layer.MPC_layer_new import MpcLayer
 
 def parse_args():
     parser = argparse.ArgumentParser("Reinforcement Learning experiments for multiagent environments")
     # Environment
     parser.add_argument("--scenario", type=str, default="my_UAV_world", help="name of the scenario script")
-    parser.add_argument("--max-episode-len", type=int, default=180, help="maximum episode length")
+    parser.add_argument("--max-episode-len", type=int, default=np.floor(120), help="maximum episode length")
     parser.add_argument("--num-episodes", type=int, default=600000, help="number of episodes")
     parser.add_argument("--num-adversaries", type=int, default=1, help="number of adversaries")
     parser.add_argument("--good-policy", type=str, default="maddpg", help="policy for good agents")
@@ -48,7 +48,7 @@ def parse_args():
     # Checkpointing
     parser.add_argument("--exp-name", type=str, default=None, help="name of the experiment")
     parser.add_argument("--save-dir", type=str, default="./ckpt_my_UAV_world_6_landmarks_safety_layer/test.ckpt", help="directory in which training state and model should be saved")
-    parser.add_argument("--save-rate", type=int, default=1000, help="save model once every time this many episodes are completed")
+    parser.add_argument("--save-rate", type=int, default=50, help="save model once every time this many episodes are completed")
     parser.add_argument("--load-dir", type=str, default="", help="directory in which training state and model are loaded")
     # Evaluation
     parser.add_argument("--restore", action="store_true", default=True)
@@ -301,8 +301,8 @@ def train(arglist):
             loss = None
             for agent in trainers:
                 agent.preupdate()
-            for agent in trainers:
-                loss = agent.update(trainers, train_step)
+            '''for agent in trainers:
+                loss = agent.update(trainers, train_step)'''
 
             # save model, display training output
             if (done or terminal) and (len(episode_rewards) % arglist.save_rate == 0):
@@ -317,7 +317,7 @@ def train(arglist):
                         train_step, len(episode_rewards), np.mean(episode_rewards[-arglist.save_rate:]),
                         cumulative_constraint_violations,
                         num_done, round(time.time()-t_start, 3)))
-                    print(trainers[0].safety_layer.num_call)
+                    # print(trainers[0].safety_layer.num_call)
                 t_start = time.time()
                 num_done = 0
                 cumulative_constraint_violations = 0

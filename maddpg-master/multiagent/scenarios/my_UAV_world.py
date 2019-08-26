@@ -13,10 +13,10 @@ class Scenario(BaseScenario):
         world.dim_c = 2
         num_agents = 1
         self.num_district = np.int(18 / 3)
-        self.num_landmarks_district = [np.int(np.random.uniform(8, 16)) for i in range(self.num_district)]
+        self.num_landmarks_district = [np.int(np.random.uniform(8, 17)) for i in range(self.num_district)]
         self.num_landmarks = np.sum(self.num_landmarks_district) + 1
         world.observing_range = 3
-        world.min_corridor = 0.10
+        world.min_corridor = 0.15
         world.collaborative = True
         # add agents
         world.agents = [Agent() for _ in range(num_agents)]
@@ -104,7 +104,7 @@ class Scenario(BaseScenario):
                                 j_ = j
                             temp1.append(np.sqrt(np.sum(np.square(world.landmarks[j_].state.p_pos - landmark.state.p_pos))))
                             if j_ == -1:
-                                temp2.append(world.landmarks[j_].size + landmark.size + 0.5)
+                                temp2.append(world.landmarks[j_].size + landmark.size + 1.5)
                             else:
                                 temp2.append(world.landmarks[j_].size + landmark.size + world.min_corridor)
                         if min(np.array(temp1) - np.array(temp2)) > 0:
