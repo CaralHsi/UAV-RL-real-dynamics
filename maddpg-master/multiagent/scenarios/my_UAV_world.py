@@ -12,10 +12,10 @@ class Scenario(BaseScenario):
         # set any world properties first
         world.dim_c = 2
         num_agents = 1
-        self.num_district = np.int(18 / 3)
-        self.num_landmarks_district = [np.int(np.random.uniform(8, 17)) for i in range(self.num_district)]
+        self.num_district = np.int(18/ 6)
+        self.num_landmarks_district = [np.int(np.random.uniform(8, 11)) for i in range(self.num_district)]
         self.num_landmarks = np.sum(self.num_landmarks_district) + 1
-        world.observing_range = 3
+        world.observing_range = 5
         world.min_corridor = 0.15
         world.collaborative = True
         # add agents
@@ -62,14 +62,14 @@ class Scenario(BaseScenario):
             agent.state.p_pos = np.squeeze(np.array([np.random.uniform(-1, -0.9, 1), np.random.uniform(-0.1, +0.1, 1)]))
             agent.state.start = copy.deepcopy(agent.state.p_pos)
             # initialize v
-            agent.state.p_vel = np.array([0.3])  # np.zeros(1)  # because the velocity is along the flying direction
+            agent.state.p_vel = np.array([0.2])  # np.zeros(1)  # because the velocity is along the flying direction
             # initialize theta
             agent.state.theta = np.random.uniform(-np.pi/3, np.pi/3, 1)
             agent.state.omega = np.array([0.0])
             agent.state.c = np.zeros(world.dim_c)
             agent.done = False
         landmark = world.landmarks[-1]
-        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(5, 18, 1), np.random.uniform(-0.1, +0.1, 1)]))
+        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(10, 18, 1), np.random.uniform(-0.1, +0.1, 1)]))
         landmark.state.p_vel = np.zeros(world.dim_p)
         for num_d in range(self.num_district):
             done = 0
@@ -87,10 +87,10 @@ class Scenario(BaseScenario):
                         if max_num > 10:
                             fail = 1
                             break
-                        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(num_d * 3 + 0.5,
-                                                                                      (num_d + 1) * 3 + 1.5, 1),
-                                                                    np.random.uniform(-10, +10, 1)]))
-                        landmark.size = np.random.uniform(0.50, 0.85)
+                        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(num_d * 6 + 0.5,
+                                                                                      (num_d + 1) * 6 + 1.5, 1),
+                                                                    np.random.uniform(-8, +8, 1)]))
+                        landmark.size = np.random.uniform(0.90, 1.25)
                         temp1 = []
                         temp2 = []
                         temp1.append(np.sqrt(np.sum(np.square(world.agents[0].state.p_pos - landmark.state.p_pos))))
@@ -103,10 +103,15 @@ class Scenario(BaseScenario):
                             else:
                                 j_ = j
                             temp1.append(np.sqrt(np.sum(np.square(world.landmarks[j_].state.p_pos - landmark.state.p_pos))))
+                            temp1_  = np.sqrt(np.sum(np.square(world.landmarks[j_].state.p_pos - landmark.state.p_pos)))
                             if j_ == -1:
-                                temp2.append(world.landmarks[j_].size + landmark.size + 1.5)
+                                temp2.append(world.landmarks[j_].size + landmark.size + world.min_corridor)
+                                temp2_ = world.landmarks[j_].size + landmark.size + world.min_corridor
                             else:
                                 temp2.append(world.landmarks[j_].size + landmark.size + world.min_corridor)
+                                temp2_ = world.landmarks[j_].size + landmark.size + world.min_corridor
+                            if temp1_ < temp2_:
+                                break
                         if min(np.array(temp1) - np.array(temp2)) > 0:
                             flag = 0
                     landmark.state.p_vel = np.zeros(world.dim_p)

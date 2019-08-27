@@ -33,7 +33,7 @@ def parse_args():
     parser = argparse.ArgumentParser("Reinforcement Learning experiments for multiagent environments")
     # Environment
     parser.add_argument("--scenario", type=str, default="my_UAV_world", help="name of the scenario script")
-    parser.add_argument("--max-episode-len", type=int, default=np.floor(120), help="maximum episode length")
+    parser.add_argument("--max-episode-len", type=int, default=np.floor(130), help="maximum episode length")
     parser.add_argument("--num-episodes", type=int, default=600000, help="number of episodes")
     parser.add_argument("--num-adversaries", type=int, default=1, help="number of adversaries")
     parser.add_argument("--good-policy", type=str, default="maddpg", help="policy for good agents")
@@ -44,11 +44,11 @@ def parse_args():
     parser.add_argument("--batch-size", type=int, default=1024, help="number of episodes to optimize at the same time")
     parser.add_argument("--num-units", type=int, default=64, help="number of units in the mlp")
     parser.add_argument("--use-safety-layer", action="store_true", default=False, help="whether use safety_layer")
-    parser.add_argument("--use-mpc-layer", action="store_true", default=True, help="whether use MPC_layer")
+    parser.add_argument("--use-mpc-layer", action="store_true", default=False, help="whether use MPC_layer")
     # Checkpointing
     parser.add_argument("--exp-name", type=str, default=None, help="name of the experiment")
     parser.add_argument("--save-dir", type=str, default="./ckpt_my_UAV_world_6_landmarks_safety_layer/test.ckpt", help="directory in which training state and model should be saved")
-    parser.add_argument("--save-rate", type=int, default=50, help="save model once every time this many episodes are completed")
+    parser.add_argument("--save-rate", type=int, default=1000, help="save model once every time this many episodes are completed")
     parser.add_argument("--load-dir", type=str, default="", help="directory in which training state and model are loaded")
     # Evaluation
     parser.add_argument("--restore", action="store_true", default=True)
@@ -195,7 +195,8 @@ def train(arglist):
             # new_c_n = env.get_constraint_values()
             episode_step += 1
             done = all(done_n)
-            terminal = (episode_step >= arglist.max_episode_len)
+            terminal = (episode_step >= arglist.max_episode_len) or \
+                       (env.agents[0].state.p_pos[0] - env.world.landmarks[-1].state.p_pos[0]) > 1.5
             # collect experience
             for i, agent in enumerate(trainers):
                 agent.experience(obs_n[i], action_n[i], rew_n[i], new_obs_n[i], done_n[i], terminal)
@@ -234,12 +235,12 @@ def train(arglist):
                     circle = mpathes.Circle(p_pos, r)
                     ax0.add_patch(circle)
                 ax0.set_xlim((-1, 40))
-                ax0.set_ylim((-10.3, 10.3))
+                ax0.set_ylim((-8.3, 8.3))
                 ax0.axis('equal')
                 ax0.set_title("x-y")
                 x1 = [-1, 40]
-                y1 = [10.3, 10.3]
-                y2 = [-10.3, -10.3]
+                y1 = [8.3, 8.3]
+                y2 = [-8.3, -8.3]
                 ax0.plot(x1, y1)
                 ax0.plot(x1, y2)
                 plt.show()'''
@@ -301,8 +302,8 @@ def train(arglist):
             loss = None
             for agent in trainers:
                 agent.preupdate()
-            '''for agent in trainers:
-                loss = agent.update(trainers, train_step)'''
+            for agent in trainers:
+                loss = agent.update(trainers, train_step)
 
             # save model, display training output
             if (done or terminal) and (len(episode_rewards) % arglist.save_rate == 0):

@@ -30,8 +30,8 @@ class NoFlyZone:
         for i in range(self.M):
             self.x_NFZ[i] = obs[6 + i * 3 + 0] + obs[2]
             self.y_NFZ[i] = obs[6 + i * 3 + 1] + obs[3]
-            self.a_NFZ[i] = obs[6 + i * 3 + 2] + self.agent_r * 1.2
-            self.b_NFZ[i] = obs[6 + i * 3 + 2] + self.agent_r * 1.2
+            self.a_NFZ[i] = obs[6 + i * 3 + 2] + self.agent_r
+            self.b_NFZ[i] = obs[6 + i * 3 + 2] + self.agent_r
             if self.x_NFZ[i] == -1 and self.y_NFZ[i] == -1 and self.a_NFZ[i] == -1:
                 self.M = i
                 break

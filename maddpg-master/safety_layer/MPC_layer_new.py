@@ -33,8 +33,8 @@ class NoFlyZone:
         for i in range(self.M):
             self.x_NFZ[i] = obs[6 + i * 3 + 0] + obs[2]
             self.y_NFZ[i] = obs[6 + i * 3 + 1] + obs[3]
-            self.a_NFZ[i] = obs[6 + i * 3 + 2] + self.agent_r
-            self.b_NFZ[i] = obs[6 + i * 3 + 2] + self.agent_r
+            self.a_NFZ[i] = obs[6 + i * 3 + 2] * 0.99 + self.agent_r
+            self.b_NFZ[i] = obs[6 + i * 3 + 2] * 0.99 + self.agent_r
             if self.x_NFZ[i] == -1 and self.y_NFZ[i] == -1 and self.a_NFZ[i] == -1:
                 self.M = i
                 break
@@ -189,7 +189,7 @@ class MpcLayer:
     def __init__(self, env=None):
         self.env = env
         v = self.env.agents[0].state.p_vel
-        self.N = 4
+        self.N = 6
         self.initial_trajectory = InitialTrajectory()
         self.UAV_config = InitialConfiguration(v, self.N)
         self.NoFlyZone = NoFlyZone(self.env.world.agents[0].size)
@@ -213,12 +213,12 @@ class MpcLayer:
             r = landmark.size
             circle = mpathes.Circle(p_pos, r)
             ax0.add_patch(circle)
-        for i in range(self.UAV_config.N):
+        for i in range(self.UAV_config.N + 1):
             p_pos = np.array([x_pos[i], y_pos[i]])
             r = self.env.world.agents[0].size
             circle = mpathes.Circle(p_pos, r)
             ax0.add_patch(circle)
-        for i in range(self.UAV_config.N):
+        for i in range(self.UAV_config.N + 1):
             p_pos = np.array([self.initial_trajectory.x[i], self.initial_trajectory.y[i]])
             r = self.env.world.agents[0].size
             circle = mpathes.Circle(p_pos, r, facecolor='lightsalmon', edgecolor='orangered')

@@ -178,8 +178,16 @@ class MADDPGAgentTrainer(AgentTrainer):
                 action_future = [self.act(obs_future[None])[0]]
                 # environment step
                 new_obs_n, rew_n, done_n, info_n = env_future.step(action_future)
-                is_any_collision = env_future.is_any_collision()
-                if env_future.is_any_collision()[0]:
+                is_any_collision = []
+                for agent in env_future.agents:
+                    temp = False
+                    for _, landmark in enumerate(env_future.world.landmarks[0:-1]):
+                        dist = np.sqrt(np.sum(np.square(agent.state.p_pos - landmark.state.p_pos))) \
+                               - (agent.size + landmark.size)
+                        if dist <= 0:
+                            temp = True
+                    is_any_collision.append(temp)
+                if is_any_collision[0]:
                     collision_flag = True
                 done_future = all(done_n)
                 if done_future:
