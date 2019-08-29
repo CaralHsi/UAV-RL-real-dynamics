@@ -94,7 +94,7 @@ class MultiAgentEnv(gym.Env):
             is_any_collision.append(self._is_any_collision(agent))
         return is_any_collision
 
-    def step(self, action_n):
+    def step(self, action_n, if_call=None):
         obs_n = []
         reward_n = []
         done_n = []
@@ -104,7 +104,7 @@ class MultiAgentEnv(gym.Env):
         for i, agent in enumerate(self.agents):  # pass the action command into each agent
             self._set_action(action_n[i], agent, self.action_space[i])
         # advance world state
-        self.world.step()
+        self.world.step(if_call)
         # record observation for each agent
         for i, agent in enumerate(self.agents):
             obs_n.append(self._get_obs(agent))

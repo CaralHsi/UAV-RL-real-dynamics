@@ -33,8 +33,8 @@ class NoFlyZone:
         for i in range(self.M):
             self.x_NFZ[i] = obs[6 + i * 3 + 0] + obs[2]
             self.y_NFZ[i] = obs[6 + i * 3 + 1] + obs[3]
-            self.a_NFZ[i] = obs[6 + i * 3 + 2] * 0.99 + self.agent_r
-            self.b_NFZ[i] = obs[6 + i * 3 + 2] * 0.99 + self.agent_r
+            self.a_NFZ[i] = obs[6 + i * 3 + 2] + 1.3 * self.agent_r
+            self.b_NFZ[i] = obs[6 + i * 3 + 2] + 1.3 * self.agent_r
             if self.x_NFZ[i] == -1 and self.y_NFZ[i] == -1 and self.a_NFZ[i] == -1:
                 self.M = i
                 break
@@ -96,13 +96,13 @@ def optimization(UAV_config, no_fly_zone, initial_trajectory, plot_procedure=Fal
         constraints = []
         for i in range(UAV_config.N):  # 动力学方程
             constraints.append(prob.add_constraint(y[(i + 1) * nx + 0] - y[i * nx + 0] ==
-                                                   UAV_config.v * (-np.sin(result[2, i])) *
-                                                   (y[(i + 1) * nx + 2] - result[2, i]) + UAV_config.v *
-                                                   np.cos(result[2, i])))
+                                                   UAV_config.v * (-np.sin(result[2, i + 1])) *
+                                                   (y[(i + 1) * nx + 2] - result[2, i + 1]) + UAV_config.v *
+                                                   np.cos(result[2, i + 1])))
             constraints.append(prob.add_constraint(y[(i + 1) * nx + 1] - y[i * nx + 1] ==
-                                                   UAV_config.v * np.cos(result[2, i]) *
-                                                   (y[(i + 1) * nx + 2] - result[2, i]) + UAV_config.v *
-                                                   np.sin(result[2, i])))
+                                                   UAV_config.v * np.cos(result[2, i + 1]) *
+                                                   (y[(i + 1) * nx + 2] - result[2, i + 1]) + UAV_config.v *
+                                                   np.sin(result[2, i + 1])))
             constraints.append(prob.add_constraint(y[(i + 1) * nx + 2] - y[i * nx + 2] ==
                                                    y[(i + 1) * nx + 3]))
             constraints.append(prob.add_constraint(y[(i + 1) * nx + 3] - y[i * nx + 3] ==
@@ -156,6 +156,7 @@ def optimization(UAV_config, no_fly_zone, initial_trajectory, plot_procedure=Fal
         y_pos = np.array(y[1: (UAV_config.N + 1) * nx: nx])
         theta_pos = np.array(y[2: (UAV_config.N + 1) * nx: nx])
         omega_pos = np.array(y[3: (UAV_config.N + 1) * nx: nx])
+        d_omega_pos = np.array(y[(UAV_config.N + 1) * nx: (UAV_config.N + 1) * nx + UAV_config.N])
         if iter >= 1:
             x_differ = np.zeros([UAV_config.N + 1, 1])
             y_differ = np.zeros([UAV_config.N + 1, 1])
@@ -174,7 +175,7 @@ def optimization(UAV_config, no_fly_zone, initial_trajectory, plot_procedure=Fal
             # print('Maximum difference between two successive solutions are:\n')
             # print("x: {}, y:{}  deta1:{}   v_ba:{}".format(np.max(np.abs(x_differ)), np.max(np.abs(y_differ)),
             #                                               np.max(np.abs(deta1_differ)), np.max(np.abs(v_ba_differ))))
-            if np.max(np.abs(x_differ)) <= 0.01 and np.max(np.abs(y_differ)) <= 0.01 and \
+            if np.max(np.abs(x_differ)) <= 0.005 and np.max(np.abs(y_differ)) <= 0.005 and \
                     np.max(np.abs(theta_differ)) <= 0.01 and np.max(np.abs(omega_differ)) <= 0.01:
                 flag = 0
             else:
@@ -182,7 +183,7 @@ def optimization(UAV_config, no_fly_zone, initial_trajectory, plot_procedure=Fal
                 if iter > 5:
                     break
                 result = np.squeeze(np.array([x_pos, y_pos, theta_pos, omega_pos]))
-    return x_pos, y_pos, theta_pos, omega_pos
+    return x_pos, y_pos, theta_pos, omega_pos, d_omega_pos
 
 
 class MpcLayer:
@@ -205,7 +206,7 @@ class MpcLayer:
         self.UAV_config._set(x0, y0, theta0, omega0, xf, yf)
         self.NoFlyZone._set(obs)
         self.initial_trajectory._set(trajectory, v, self.UAV_config.N)
-        x_pos, y_pos, theta_pos, omega_pos = optimization(self.UAV_config, self.NoFlyZone,
+        x_pos, y_pos, theta_pos, omega_pos, d_omega_pos = optimization(self.UAV_config, self.NoFlyZone,
                                                                                self.initial_trajectory)
         '''fig, ax0 = plt.subplots()
         for i, landmark in enumerate(self.env.world.landmarks):
@@ -214,15 +215,16 @@ class MpcLayer:
             circle = mpathes.Circle(p_pos, r)
             ax0.add_patch(circle)
         for i in range(self.UAV_config.N + 1):
-            p_pos = np.array([x_pos[i], y_pos[i]])
-            r = self.env.world.agents[0].size
-            circle = mpathes.Circle(p_pos, r)
-            ax0.add_patch(circle)
-        for i in range(self.UAV_config.N + 1):
             p_pos = np.array([self.initial_trajectory.x[i], self.initial_trajectory.y[i]])
             r = self.env.world.agents[0].size
             circle = mpathes.Circle(p_pos, r, facecolor='lightsalmon', edgecolor='orangered')
             ax0.add_patch(circle)
+        for i in range(self.UAV_config.N + 1):
+            p_pos = np.array([x_pos[i], y_pos[i]])
+            r = self.env.world.agents[0].size
+            circle = mpathes.Circle(p_pos, r)
+            ax0.add_patch(circle)
+
         ax0.set_xlim((-1, 40))
         ax0.set_ylim((-10.3, 10.3))
         ax0.axis('equal')
@@ -234,15 +236,46 @@ class MpcLayer:
         np.savetxt("data_save.txt", data_save)'''
         theta_ = self.env.agents[0].state.theta
         omega_ = self.env.agents[0].state.omega
-        theta_MPC = np.arctan((y_pos[1] - y_pos[0])/(x_pos[1] - x_pos[0]))
+        '''theta_MPC = np.arctan((y_pos[1] - y_pos[0])/(x_pos[1] - x_pos[0]))
         omega_MPC = (theta_MPC - theta_)/self.env.world.dt
-        d_omega_MPC = (omega_MPC - omega_)/self.env.world.dt
+        d_omega_MPC = (omega_MPC - omega_)/self.env.world.dt'''
+
+        theta_MPC = theta_pos[1]
+        omega_MPC = omega_pos[1]
+        d_omega_MPC = d_omega_pos[0]
+        omega__ = omega_ + d_omega_MPC * 1
+        theta__ = theta_ + omega__ * 1
+        x_pos_ = np.float(x_pos[0])
+        y_pos_ = np.float(y_pos[0])
+        x_pos_ += np.cos(theta__) * 0.2
+        y_pos_ += np.sin(theta__) * 0.2
+
         d_omega = action[3] - action[4]
         delta_action = d_omega_MPC / 0.12 - d_omega
         action[3] = action[3] + delta_action / 2
         action[4] = action[4] - delta_action / 2
         self.UAV_config.N = self.N
-        return action, False
+
+
+        p_pos_0_real = np.float(x_pos[0]) + 0.2 * np.cos(theta_MPC)
+        p_pos_1_real = np.float(y_pos[0]) + 0.2 * np.sin(theta_MPC)
+        temp = np.concatenate((p_pos_0_real, p_pos_1_real))
+
+        for i, landmark in enumerate(self.env.world.landmarks[0:-1]):
+            dist = np.sqrt(np.sum(np.square(temp - landmark.state.p_pos))) -\
+                   (self.env.agents[0].size + landmark.size)
+            dist__ = np.sqrt(np.sum(np.square(np.concatenate((x_pos[1], y_pos[1]))
+                                              - landmark.state.p_pos))) -\
+                     (self.env.agents[0].size + landmark.size)
+            if i == 0:
+                dist_ = dist
+            if dist <= 0:
+                print(0, ' ', dist, dist__)
+                print(np.sqrt(np.sum(np.square(temp - np.concatenate((x_pos[1], y_pos[1]))))))
+        #print("dist, p_pos_0_real, p_pos_1_real, theta_MPC, omega_MPC, d_omega_MPC: \n",
+              #dist_, p_pos_0_real, p_pos_1_real, theta_MPC, omega_MPC, d_omega_MPC)
+
+        return action, True
 
 
 

@@ -118,7 +118,7 @@ class World(object):
         return [agent for agent in self.agents if agent.action_callback is not None]
 
     # update state of the world
-    def step(self):
+    def step(self, if_call=None):
         # set actions for scripted agents 
         for agent in self.scripted_agents:
             agent.action = agent.action_callback(agent, self)
@@ -130,7 +130,7 @@ class World(object):
         # apply environment forces
         p_force_environment = self.apply_environment_force(p_force_environment)
         # integrate physical state
-        self.integrate_state(p_force_agent, p_force_environment)
+        self.integrate_state(p_force_agent, p_force_environment, if_call)
         # update agent state
         for agent in self.agents:
             self.update_agent_state(agent)
@@ -163,8 +163,18 @@ class World(object):
                     p_force[b] = f_b + p_force[b]        
         return p_force
 
+    def is_any_collision_(self):
+        agent = self.agents[0]
+        landmarks = self.landmarks
+        for i, landmark in enumerate(landmarks[0:-1]):
+            dist = np.sqrt(np.sum(np.square(agent.state.p_pos - landmark.state.p_pos))) \
+                   - (agent.size + landmark.size)
+            if dist <= 0:
+                return True
+        return False
+
     # integrate physical state
-    def integrate_state(self, p_force_agent, p_force_environment):
+    def integrate_state(self, p_force_agent, p_force_environment, if_call=None):
         for i, entity in enumerate(self.entities):
             if not entity.movable:
                 continue  # if not movable then pass
@@ -193,6 +203,12 @@ class World(object):
             if entity.state.omega < -0.24:
                 entity.state.omega = np.array([-0.24])
             entity.state.theta += entity.state.omega * self.dt
+            '''if if_call:
+                if if_call[0]:
+                    print('----------')
+                    print("theta, omega, d_omega:, ",
+                          entity.state.theta, entity.state.omega, p_force_agent[i][1])
+            '''
             '''if entity.max_speed is not None:
                 speed = np.sqrt(np.square(entity.state.p_vel[0]) + np.square(entity.state.p_vel[1]))  # current vel
                 if speed > entity.max_speed:  # project to the max_speed with the same proportion
@@ -202,6 +218,9 @@ class World(object):
             # after determine the speed, update the pos
             entity.state.p_pos[0] += entity.state.p_vel * np.cos(entity.state.theta) * self.dt
             entity.state.p_pos[1] += entity.state.p_vel * np.sin(entity.state.theta) * self.dt
+
+            # self.is_any_collision_()
+
 
 
     def update_agent_state(self, agent):

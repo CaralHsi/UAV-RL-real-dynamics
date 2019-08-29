@@ -44,11 +44,11 @@ def parse_args():
     parser.add_argument("--batch-size", type=int, default=1024, help="number of episodes to optimize at the same time")
     parser.add_argument("--num-units", type=int, default=64, help="number of units in the mlp")
     parser.add_argument("--use-safety-layer", action="store_true", default=False, help="whether use safety_layer")
-    parser.add_argument("--use-mpc-layer", action="store_true", default=False, help="whether use MPC_layer")
+    parser.add_argument("--use-mpc-layer", action="store_true", default=True, help="whether use MPC_layer")
     # Checkpointing
     parser.add_argument("--exp-name", type=str, default=None, help="name of the experiment")
     parser.add_argument("--save-dir", type=str, default="./ckpt_my_UAV_world_6_landmarks_safety_layer/test.ckpt", help="directory in which training state and model should be saved")
-    parser.add_argument("--save-rate", type=int, default=1000, help="save model once every time this many episodes are completed")
+    parser.add_argument("--save-rate", type=int, default=10, help="save model once every time this many episodes are completed")
     parser.add_argument("--load-dir", type=str, default="", help="directory in which training state and model are loaded")
     # Evaluation
     parser.add_argument("--restore", action="store_true", default=True)
@@ -189,8 +189,14 @@ def train(arglist):
             action_n = [action_n[0][1]]
             data_save.append(np.concatenate([obs_n[0], action_n[0], action_n[0]]))
             # environment step
-            new_obs_n, rew_n, done_n, info_n = env.step(action_n)
-            is_any_collision_new = env.is_any_collision()
+            new_obs_n, rew_n, done_n, info_n = env.step(action_n, if_call=if_call)
+            '''is_any_collision_new = env.is_any_collision()
+            if is_any_collision_new[0]:
+                env.is_any_collision()
+                dist = np.sqrt(np.sum(np.square(env.agents[0].state.p_pos - env.world.landmarks[0].state.p_pos))) -\
+                       (env.agents[0].size + env.world.landmarks[0].size)
+                # print("aaa", env.agents[0].state.p_pos, dist)'''
+
             # new c_n
             # new_c_n = env.get_constraint_values()
             episode_step += 1
@@ -215,7 +221,7 @@ def train(arglist):
                 '''np.savetxt("data_save.txt", data_save)'''  # 缺省按照'%.18e'格式保存数据，以空格分隔
 
                 # plot x, y, v, theta
-                '''a = data_save
+                a = data_save
                 V = a[:, 1]
                 x = a[:, 2]
                 y = a[:, 3]
@@ -223,26 +229,31 @@ def train(arglist):
                 omega = a[:, 5]
                 # action_n = a[:, 26] - a[:, 27]
                 # action_real = a[:, 31] - a[:, 32]
-                fig, ax0 = plt.subplots()
-                for i, landmark in enumerate(env.world.landmarks):
+                '''fig, ax0 = plt.subplots()
+                for i, landmark in enumerate(env.world.landmarks[:-1]):
                     p_pos = landmark.state.p_pos
                     r = landmark.size
-                    circle = mpathes.Circle(p_pos, r)
+                    circle = mpathes.Circle(p_pos, r, facecolor='w', edgecolor='forestgreen', linestyle='-.')
+                    ax0.add_patch(circle)
+                for i, landmark in enumerate(env.world.landmarks):
+                    p_pos = landmark.state.p_pos
+                    r = (landmark.size - 0.09) if landmark is not env.world.landmarks[-1] else landmark.size
+                    circle = mpathes.Circle(p_pos, r, facecolor='forestgreen')
                     ax0.add_patch(circle)
                 for i in range(len(x)):
                     p_pos = np.array([x[i], y[i]])
                     r = env.world.agents[0].size
-                    circle = mpathes.Circle(p_pos, r)
+                    circle = mpathes.Circle(p_pos, r, facecolor='darkgreen')
                     ax0.add_patch(circle)
                 ax0.set_xlim((-1, 40))
-                ax0.set_ylim((-8.3, 8.3))
+                ax0.set_ylim((-10, 10))
                 ax0.axis('equal')
                 ax0.set_title("x-y")
                 x1 = [-1, 40]
-                y1 = [8.3, 8.3]
-                y2 = [-8.3, -8.3]
-                ax0.plot(x1, y1)
-                ax0.plot(x1, y2)
+                y1 = [10, 10]
+                y2 = [-10, -10]
+                ax0.plot(x1, y1, color='forestgreen', linestyle='-.')
+                ax0.plot(x1, y2, color='forestgreen', linestyle='-.')
                 plt.show()'''
                 '''fig, ax = plt.subplots(ncols=2, nrows=2)
                 for i, landmark in enumerate(env.world.landmarks):
@@ -302,20 +313,20 @@ def train(arglist):
             loss = None
             for agent in trainers:
                 agent.preupdate()
-            for agent in trainers:
-                loss = agent.update(trainers, train_step)
+            '''for agent in trainers:
+                loss = agent.update(trainers, train_step)'''
 
             # save model, display training output
-            if (done or terminal) and (len(episode_rewards) % arglist.save_rate == 0):
+            if (done or terminal) and ((len(episode_rewards) - 1) % arglist.save_rate == 0):
                 U.save_state(arglist.save_dir, saver=saver)
                 # print statement depends on whether or not there are adversaries
                 if num_adversaries == 0:
                     print("steps: {}, episodes: {}, mean episode reward: {}, num_cumulative_constraints: {}, num_done: {}, time: {}".format(
-                        train_step, len(episode_rewards), np.mean(episode_rewards[-arglist.save_rate:]),
+                        train_step, len(episode_rewards) - 1, np.mean(episode_rewards[-arglist.save_rate:]),
                         cumulative_constraint_violations, num_done, round(time.time()-t_start, 3)))
                 else:
                     print("steps: {}, episodes: {}, mean episode reward: {}, num_cumulative_constraints: {}, num_done: {}, time: {}".format(
-                        train_step, len(episode_rewards), np.mean(episode_rewards[-arglist.save_rate:]),
+                        train_step, len(episode_rewards) - 1, np.mean(episode_rewards[-arglist.save_rate:]),
                         cumulative_constraint_violations,
                         num_done, round(time.time()-t_start, 3)))
                     # print(trainers[0].safety_layer.num_call)
