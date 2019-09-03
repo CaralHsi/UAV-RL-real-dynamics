@@ -3,6 +3,8 @@ import ecos
 import picos as pic
 import cvxopt
 import copy
+from matplotlib import pyplot as plt
+import matplotlib.patches as mpathes
 
 
 class InitialTrajectory:
@@ -43,7 +45,6 @@ class InitialConfiguration:
         self.psif = -60 * np.pi / 180
         self.vf = 5
         self.sf = np.sqrt(np.square(self.xf - self.x0) + np.square(self.yf - self.y0)) - 20 - 30
-
 
 
 def get_angle_between_two_points(x0, y0, xf, yf):  # 已知两点，求两点连线与x轴的夹角（0，360）
@@ -309,13 +310,15 @@ class MpcLayer:
         self.UAV_config = InitialConfiguration()
         self.NoFlyZone = NoFlyZone()
         self.env = env
-        x_pos, y_pos, thita_value, v_value, at, ah, avoid_circle1 = optimization(self.UAV_config, self.NoFlyZone,
-                                                                                 self.initial_trajectory)
+        self.x_pos, self.y_pos, self.thita_value, self.v_value,\
+        self.at, self.ah, self.avoid_circle1 = optimization(self.UAV_config, self.NoFlyZone,
+                                                            self.initial_trajectory)
 
     def get_safe_action(self, obs, action):
         self.initial_trajectory._set()
-        x_pos, y_pos, thita_value, v_value, at, ah, avoid_circle1 = optimization(self.UAV_config, self.NoFlyZone,
-                                                                                 self.initial_trajectory)
+        self.x_pos, self.y_pos, self.thita_value, self.v_value, \
+        self.at, self.ah, self.avoid_circle1 = optimization(self.UAV_config, self.NoFlyZone,
+                                                            self.initial_trajectory)
         action = None
         return action, False
 

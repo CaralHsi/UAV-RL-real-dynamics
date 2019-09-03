@@ -12,7 +12,7 @@ class Scenario(BaseScenario):
         # set any world properties first
         world.dim_c = 2
         num_agents = 1
-        self.num_district = np.int(18/ 6)
+        self.num_district = np.int(18 / 6)
         self.num_landmarks_district = [np.int(np.random.uniform(8, 11)) for i in range(self.num_district)]
         self.num_landmarks = np.sum(self.num_landmarks_district) + 1
         world.observing_range = 5
