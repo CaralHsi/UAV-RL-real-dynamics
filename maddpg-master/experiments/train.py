@@ -229,7 +229,7 @@ def train(arglist):
                 omega = a[:, 5]
                 # action_n = a[:, 26] - a[:, 27]
                 # action_real = a[:, 31] - a[:, 32]
-                '''fig, ax0 = plt.subplots()
+                fig, ax0 = plt.subplots()
                 for i, landmark in enumerate(env.world.landmarks[:-1]):
                     p_pos = landmark.state.p_pos
                     r = landmark.size
@@ -254,7 +254,7 @@ def train(arglist):
                 y2 = [-10, -10]
                 ax0.plot(x1, y1, color='forestgreen', linestyle='-.')
                 ax0.plot(x1, y2, color='forestgreen', linestyle='-.')
-                plt.show()'''
+                plt.show()
                 '''fig, ax = plt.subplots(ncols=2, nrows=2)
                 for i, landmark in enumerate(env.world.landmarks):
                     p_pos = landmark.state.p_pos
