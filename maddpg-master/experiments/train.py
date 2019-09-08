@@ -33,22 +33,22 @@ def parse_args():
     parser = argparse.ArgumentParser("Reinforcement Learning experiments for multiagent environments")
     # Environment
     parser.add_argument("--scenario", type=str, default="my_UAV_world", help="name of the scenario script")
-    parser.add_argument("--max-episode-len", type=int, default=np.floor(130), help="maximum episode length")
+    parser.add_argument("--max-episode-len", type=int, default=np.floor(120), help="maximum episode length")
     parser.add_argument("--num-episodes", type=int, default=600000, help="number of episodes")
     parser.add_argument("--num-adversaries", type=int, default=1, help="number of adversaries")
     parser.add_argument("--good-policy", type=str, default="maddpg", help="policy for good agents")
     parser.add_argument("--adv-policy", type=str, default="maddpg", help="policy of adversaries")
     # Core training parameters
-    parser.add_argument("--lr", type=float, default=0.5 * 1e-2, help="learning rate for Adam optimizer")
+    parser.add_argument("--lr", type=float, default=1 * 1e-2, help="learning rate for Adam optimizer")
     parser.add_argument("--gamma", type=float, default=0.95, help="discount factor")
     parser.add_argument("--batch-size", type=int, default=1024, help="number of episodes to optimize at the same time")
     parser.add_argument("--num-units", type=int, default=64, help="number of units in the mlp")
     parser.add_argument("--use-safety-layer", action="store_true", default=False, help="whether use safety_layer")
-    parser.add_argument("--use-mpc-layer", action="store_true", default=True, help="whether use MPC_layer")
+    parser.add_argument("--use-mpc-layer", action="store_true", default=False, help="whether use MPC_layer")
     # Checkpointing
     parser.add_argument("--exp-name", type=str, default=None, help="name of the experiment")
     parser.add_argument("--save-dir", type=str, default="./ckpt_my_UAV_world_6_landmarks_safety_layer/test.ckpt", help="directory in which training state and model should be saved")
-    parser.add_argument("--save-rate", type=int, default=10, help="save model once every time this many episodes are completed")
+    parser.add_argument("--save-rate", type=int, default=1000, help="save model once every time this many episodes are completed")
     parser.add_argument("--load-dir", type=str, default="", help="directory in which training state and model are loaded")
     # Evaluation
     parser.add_argument("--restore", action="store_true", default=True)
@@ -221,7 +221,7 @@ def train(arglist):
                 '''np.savetxt("data_save.txt", data_save)'''  # 缺省按照'%.18e'格式保存数据，以空格分隔
 
                 # plot x, y, v, theta
-                a = data_save
+                '''a = data_save
                 V = a[:, 1]
                 x = a[:, 2]
                 y = a[:, 3]
@@ -232,14 +232,18 @@ def train(arglist):
                 fig, ax0 = plt.subplots()
                 for i, landmark in enumerate(env.world.landmarks[:-1]):
                     p_pos = landmark.state.p_pos
-                    r = landmark.size
-                    circle = mpathes.Circle(p_pos, r, facecolor='w', edgecolor='forestgreen', linestyle='-.')
-                    ax0.add_patch(circle)
+                    a = landmark.sizea
+                    b = landmark.sizeb
+                    theta = landmark.direction / np.pi * 180
+                    ellipse = mpathes.Ellipse(p_pos, 2 * a, 2 * b, theta, facecolor='w', edgecolor='forestgreen', linestyle='-.')
+                    ax0.add_patch(ellipse)
                 for i, landmark in enumerate(env.world.landmarks):
                     p_pos = landmark.state.p_pos
-                    r = (landmark.size - 0.09) if landmark is not env.world.landmarks[-1] else landmark.size
-                    circle = mpathes.Circle(p_pos, r, facecolor='forestgreen')
-                    ax0.add_patch(circle)
+                    theta = landmark.direction / np.pi * 180
+                    a = (landmark.sizea - 0.09) if landmark is not env.world.landmarks[-1] else landmark.sizea
+                    b = (landmark.sizeb - 0.09) if landmark is not env.world.landmarks[-1] else landmark.sizeb
+                    ellipse = mpathes.Ellipse(p_pos, 2 * a, 2 * b, theta, facecolor='forestgreen')
+                    ax0.add_patch(ellipse)
                 for i in range(len(x)):
                     p_pos = np.array([x[i], y[i]])
                     r = env.world.agents[0].size
@@ -254,7 +258,7 @@ def train(arglist):
                 y2 = [-10, -10]
                 ax0.plot(x1, y1, color='forestgreen', linestyle='-.')
                 ax0.plot(x1, y2, color='forestgreen', linestyle='-.')
-                plt.show()
+                plt.show()'''
                 '''fig, ax = plt.subplots(ncols=2, nrows=2)
                 for i, landmark in enumerate(env.world.landmarks):
                     p_pos = landmark.state.p_pos
@@ -313,8 +317,8 @@ def train(arglist):
             loss = None
             for agent in trainers:
                 agent.preupdate()
-            '''for agent in trainers:
-                loss = agent.update(trainers, train_step)'''
+            for agent in trainers:
+                loss = agent.update(trainers, train_step)
 
             # save model, display training output
             if (done or terminal) and ((len(episode_rewards) - 1) % arglist.save_rate == 0):

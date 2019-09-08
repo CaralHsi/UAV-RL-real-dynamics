@@ -123,6 +123,8 @@ class MultiAgentEnv(gym.Env):
     def reset(self):
         # reset world
         self.reset_callback(self.world)
+        # dist
+        self.dist = np.sqrt(np.sum(np.square(self.agents[0].state.p_pos - self.world.landmarks[-1].state.p_pos)))
         # reset renderer
         self._reset_render()
         # reset first action_last
