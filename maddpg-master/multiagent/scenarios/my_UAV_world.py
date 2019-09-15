@@ -2,6 +2,8 @@ import numpy as np
 from multiagent.core_UAV import World, Agent, Landmark
 from multiagent.scenario import BaseScenario
 import copy
+from matplotlib import pyplot as plt
+import matplotlib.patches as mpathes
 
 # hard constraints for dynamic and no-flying-zone
 
@@ -12,8 +14,8 @@ class Scenario(BaseScenario):
         # set any world properties first
         world.dim_c = 2
         num_agents = 1
-        self.num_district = np.int(18 / 6)
-        self.num_landmarks_district = [np.int(np.random.uniform(8, 11)) for i in range(self.num_district)]
+        self.num_district = np.int(12 / 6)
+        self.num_landmarks_district = [np.int(np.random.uniform(8, 10)) for i in range(self.num_district)]
         self.num_landmarks = np.sum(self.num_landmarks_district) + 1
         world.observing_range = 5
         world.min_corridor = 0.15
@@ -73,7 +75,7 @@ class Scenario(BaseScenario):
             agent.state.c = np.zeros(world.dim_c)
             agent.done = False
         landmark = world.landmarks[-1]
-        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(10, 18, 1), np.random.uniform(-0.1, +0.1, 1)]))
+        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(6, 12), np.random.uniform(-0.1, +0.1, 1)]))
         landmark.state.p_vel = np.zeros(world.dim_p)
         for num_d in range(self.num_district):
             done = 0
@@ -162,12 +164,60 @@ class Scenario(BaseScenario):
             dist = x_ ** 2 / a ** 2 + y_ ** 2 / b ** 2
             return True if dist < 1 else False
         elif isinstance(agent1, Landmark) and isinstance(agent2, Agent):
+            '''fig, ax0 = plt.subplots()
+            landmark = agent1
+            p_pos = landmark.state.p_pos
+            theta = landmark.direction / np.pi * 180
+            a = landmark.sizea
+            b = landmark.sizeb
+            ellipse = mpathes.Ellipse(p_pos, 2 * a, 2 * b, theta, facecolor='forestgreen')
+            ax0.add_patch(ellipse)
+            p_pos = np.array([agent2.state.p_pos[0], agent2.state.p_pos[1]])
+            r = agent2.size
+            circle = mpathes.Circle(p_pos, r, facecolor='darkgreen')
+            ax0.add_patch(circle)
+            ax0.set_xlim((-1, 10))
+            ax0.set_ylim((-10, 10))
+            ax0.axis('equal')
+            ax0.set_title("x-y")
+            x1 = [-1, 10]
+            y1 = [10, 10]
+            y2 = [-10, -10]
+            ax0.plot(x1, y1, color='forestgreen', linestyle='-.')
+            ax0.plot(x1, y2, color='forestgreen', linestyle='-.')
+            plt.show()'''
             theta = agent1.direction
             a = agent1.sizea + agent2.size
             b = agent1.sizeb + agent2.size
-            x_ = agent2.state.p_pos[0] * np.cos(theta) + agent2.state.p_pos[1] * np.sin(theta)
-            y_ = - agent2.state.p_pos[0] * np.sin(theta) + agent2.state.p_pos[1] * np.cos(theta)
+            x_ = (agent2.state.p_pos[0] - agent1.state.p_pos[0]) * np.cos(theta) +\
+                 (agent2.state.p_pos[1] - agent1.state.p_pos[1]) * np.sin(theta)
+            y_ = - (agent2.state.p_pos[0] - agent1.state.p_pos[0]) * np.sin(theta) +\
+                 (agent2.state.p_pos[1] - agent1.state.p_pos[1]) * np.cos(theta)
             dist = x_ ** 2 / a ** 2 + y_ ** 2 / b ** 2
+            '''if dist < 1:
+                print('aaa')
+                fig, ax0 = plt.subplots()
+                landmark = agent1
+                p_pos = landmark.state.p_pos
+                theta = landmark.direction / np.pi * 180
+                a = landmark.sizea
+                b = landmark.sizeb
+                ellipse = mpathes.Ellipse(p_pos, 2 * a, 2 * b, theta, facecolor='forestgreen')
+                ax0.add_patch(ellipse)
+                p_pos = np.array([agent2.state.p_pos[0], agent2.state.p_pos[1]])
+                r = agent2.size
+                circle = mpathes.Circle(p_pos, r, facecolor='darkgreen')
+                ax0.add_patch(circle)
+                ax0.set_xlim((-1, 10))
+                ax0.set_ylim((-10, 10))
+                ax0.axis('equal')
+                ax0.set_title("x-y")
+                x1 = [-1, 10]
+                y1 = [10, 10]
+                y2 = [-10, -10]
+                ax0.plot(x1, y1, color='forestgreen', linestyle='-.')
+                ax0.plot(x1, y2, color='forestgreen', linestyle='-.')
+                plt.show()'''
             return True if dist < 1 else False
         else:
             pass
@@ -184,7 +234,7 @@ class Scenario(BaseScenario):
         if agent.collide:
             for a in world.landmarks[0:-1]:
                 if self.is_collision(a, agent):
-                    rew -= 1
+                    rew -= 7
         rew /= world.landmarks[-1].state.p_pos[0]
         return rew
 
