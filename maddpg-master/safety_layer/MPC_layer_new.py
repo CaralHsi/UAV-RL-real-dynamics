@@ -31,10 +31,10 @@ class NoFlyZone:
         self.a_NFZ = np.array(np.zeros(self.M))
         self.b_NFZ = np.array(np.zeros(self.M))
         for i in range(self.M):
-            self.x_NFZ[i] = obs[6 + i * 3 + 0] + obs[2]
-            self.y_NFZ[i] = obs[6 + i * 3 + 1] + obs[3]
-            self.a_NFZ[i] = obs[6 + i * 3 + 2] + 1.3 * self.agent_r
-            self.b_NFZ[i] = obs[6 + i * 3 + 2] + 1.3 * self.agent_r
+            self.x_NFZ[i] = obs[6 + i * 5 + 0] + obs[2]
+            self.y_NFZ[i] = obs[6 + i * 5 + 1] + obs[3]
+            self.a_NFZ[i] = obs[6 + i * 5 + 2] + 1.3 * self.agent_r
+            self.b_NFZ[i] = obs[6 + i * 5 + 3] + 1.3 * self.agent_r
             if self.x_NFZ[i] == -1 and self.y_NFZ[i] == -1 and self.a_NFZ[i] == -1:
                 self.M = i
                 break
@@ -211,9 +211,11 @@ class MpcLayer:
         '''fig, ax0 = plt.subplots()
         for i, landmark in enumerate(self.env.world.landmarks):
             p_pos = landmark.state.p_pos
-            r = landmark.size
-            circle = mpathes.Circle(p_pos, r)
-            ax0.add_patch(circle)
+            ra = landmark.sizea
+            rb = landmark.sizeb
+            direction = landmark.direction
+            ellipse = mpathes.Ellipse(p_pos, 2 * ra, 2 * rb, direction, facecolor='forestgreen')
+            ax0.add_patch(ellipse)
         for i in range(self.UAV_config.N + 1):
             p_pos = np.array([self.initial_trajectory.x[i], self.initial_trajectory.y[i]])
             r = self.env.world.agents[0].size

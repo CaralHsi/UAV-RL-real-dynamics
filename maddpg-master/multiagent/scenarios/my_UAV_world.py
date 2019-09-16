@@ -14,7 +14,7 @@ class Scenario(BaseScenario):
         # set any world properties first
         world.dim_c = 2
         num_agents = 1
-        self.num_district = np.int(12 / 6)
+        self.num_district = np.int(18 / 6)
         self.num_landmarks_district = [np.int(np.random.uniform(8, 10)) for i in range(self.num_district)]
         self.num_landmarks = np.sum(self.num_landmarks_district) + 1
         world.observing_range = 5
@@ -75,7 +75,7 @@ class Scenario(BaseScenario):
             agent.state.c = np.zeros(world.dim_c)
             agent.done = False
         landmark = world.landmarks[-1]
-        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(6, 12), np.random.uniform(-0.1, +0.1, 1)]))
+        landmark.state.p_pos = np.squeeze(np.array([np.random.uniform(6, 18), np.random.uniform(-0.1, +0.1, 1)]))
         landmark.state.p_vel = np.zeros(world.dim_p)
         for num_d in range(self.num_district):
             done = 0
@@ -98,7 +98,7 @@ class Scenario(BaseScenario):
                                                                     np.random.uniform(-8, +8, 1)]))
                         landmark.sizea = np.random.uniform(0.90, 1.55)
                         landmark.sizeb = np.random.uniform(0.90, 1.55)
-                        landmark.direction = np.random.uniform(0, np.pi)
+                        landmark.direction = np.random.uniform(0, 0)
                         temp1 = []
                         temp2 = []
                         temp1.append(np.sqrt(np.sum(np.square(world.agents[0].state.p_pos - landmark.state.p_pos))))
@@ -159,8 +159,10 @@ class Scenario(BaseScenario):
             theta = agent2.direction
             a = agent2.sizea + agent1.size
             b = agent2.sizeb + agent1.size
-            x_ = agent1.state.p_pos[0] * np.cos(theta) + agent1.state.p_pos[1] * np.sin(theta)
-            y_ = - agent1.state.p_pos[0] * np.sin(theta) + agent1.state.p_pos[1] * np.cos(theta)
+            x_ = (agent1.state.p_pos[0] - agent2.state.p_pos[0]) * np.cos(theta) + \
+                 (agent1.state.p_pos[1] - agent2.state.p_pos[1]) * np.sin(theta)
+            y_ = - (agent1.state.p_pos[0] - agent2.state.p_pos[0]) * np.sin(theta) + \
+                 (agent1.state.p_pos[1] - agent2.state.p_pos[1]) * np.cos(theta)
             dist = x_ ** 2 / a ** 2 + y_ ** 2 / b ** 2
             return True if dist < 1 else False
         elif isinstance(agent1, Landmark) and isinstance(agent2, Agent):

@@ -182,9 +182,17 @@ class MADDPGAgentTrainer(AgentTrainer):
                 for agent in env_future.agents:
                     temp = False
                     for _, landmark in enumerate(env_future.world.landmarks[0:-1]):
-                        dist = np.sqrt(np.sum(np.square(agent.state.p_pos - landmark.state.p_pos))) \
-                               - (agent.size + landmark.size)
-                        if dist <= 0:
+                        '''dist = np.sqrt(np.sum(np.square(agent.state.p_pos - landmark.state.p_pos))) \
+                               - (agent.size + landmark.size)]'''
+                        theta = landmark.direction
+                        a = landmark.sizea + agent.size
+                        b = landmark.sizeb + agent.size
+                        x_ = (agent.state.p_pos[0] - landmark.state.p_pos[0]) * np.cos(theta) + \
+                             (agent.state.p_pos[1] - landmark.state.p_pos[1]) * np.sin(theta)
+                        y_ = - (agent.state.p_pos[0] - landmark.state.p_pos[0]) * np.sin(theta) + \
+                             (agent.state.p_pos[1] - landmark.state.p_pos[1]) * np.cos(theta)
+                        dist = x_ ** 2 / a ** 2 + y_ ** 2 / b ** 2
+                        if dist <= 1:
                             temp = True
                     is_any_collision.append(temp)
                 if is_any_collision[0]:
