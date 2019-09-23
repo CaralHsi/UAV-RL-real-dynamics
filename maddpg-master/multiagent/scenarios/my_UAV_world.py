@@ -286,9 +286,17 @@ class Scenario(BaseScenario):
 
     def is_any_collision(self, agent, world):
         for i, landmark in enumerate(world.landmarks[0:-1]):
-            dist = np.sqrt(np.sum(np.square(agent.state.p_pos - landmark.state.p_pos))) -\
-                   (agent.size + landmark.sizea * 0.5 + landmark.sizeb * 0.5 - 0.09)
-            if dist <= 0:
+            agent1 = landmark
+            agent2 = agent
+            theta = agent1.direction
+            a = agent1.sizea + agent2.size - 0.09
+            b = agent1.sizeb + agent2.size - 0.09
+            x_ = (agent2.state.p_pos[0] - agent1.state.p_pos[0]) * np.cos(theta) + \
+                 (agent2.state.p_pos[1] - agent1.state.p_pos[1]) * np.sin(theta)
+            y_ = - (agent2.state.p_pos[0] - agent1.state.p_pos[0]) * np.sin(theta) + \
+                 (agent2.state.p_pos[1] - agent1.state.p_pos[1]) * np.cos(theta)
+            dist = x_ ** 2 / a ** 2 + y_ ** 2 / b ** 2
+            if dist <= 1:
                 return True
         return False
 

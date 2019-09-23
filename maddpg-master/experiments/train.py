@@ -39,7 +39,7 @@ def parse_args():
     parser.add_argument("--good-policy", type=str, default="maddpg", help="policy for good agents")
     parser.add_argument("--adv-policy", type=str, default="maddpg", help="policy of adversaries")
     # Core training parameters
-    parser.add_argument("--lr", type=float, default=0.1 * 1e-2, help="learning rate for Adam optimizer")
+    parser.add_argument("--lr", type=float, default=0.02 * 1e-2, help="learning rate for Adam optimizer")
     parser.add_argument("--gamma", type=float, default=0.95, help="discount factor")
     parser.add_argument("--batch-size", type=int, default=1024, help="number of episodes to optimize at the same time")
     parser.add_argument("--num-units", type=int, default=64, help="number of units in the mlp")
@@ -48,7 +48,7 @@ def parse_args():
     # Checkpointing
     parser.add_argument("--exp-name", type=str, default=None, help="name of the experiment")
     parser.add_argument("--save-dir", type=str, default="./ckpt_my_UAV_world_6_landmarks_safety_layer/test.ckpt", help="directory in which training state and model should be saved")
-    parser.add_argument("--save-rate", type=int, default=10, help="save model once every time this many episodes are completed")
+    parser.add_argument("--save-rate", type=int, default=50, help="save model once every time this many episodes are completed")
     parser.add_argument("--load-dir", type=str, default="", help="directory in which training state and model are loaded")
     # Evaluation
     parser.add_argument("--restore", action="store_true", default=True)
@@ -159,6 +159,7 @@ def train(arglist):
         t_start = time.time()
         data_save = []
         num_done = 0
+        collision = False
 
         # pickle env
         # env0 = copy.deepcopy(env)
@@ -178,8 +179,6 @@ def train(arglist):
             # get constraint_values
             c_n = env.get_constraint_values()
             is_any_collision = env.is_any_collision()
-            if is_any_collision[0]:
-                cumulative_constraint_violations = cumulative_constraint_violations + 1
             '''if c_n[0][0] > 0:
                 print("there is a c_n > 0")'''
             # get action
@@ -190,13 +189,14 @@ def train(arglist):
             data_save.append(np.concatenate([obs_n[0], action_n[0], action_n[0]]))
             # environment step
             new_obs_n, rew_n, done_n, info_n = env.step(action_n, if_call=if_call)
-            '''is_any_collision_new = env.is_any_collision()
+            is_any_collision_new = env.is_any_collision()
             if is_any_collision_new[0]:
-                env.is_any_collision()
+                collision = True
+                '''env.is_any_collision()
                 dist = np.sqrt(np.sum(np.square(env.agents[0].state.p_pos - env.world.landmarks[0].state.p_pos))) -\
-                       (env.agents[0].size + env.world.landmarks[0].size)
+                       (env.agents[0].size + env.world.landmarks[0].size)'''
                 # print("aaa", env.agents[0].state.p_pos, dist)'''
-
+                # cumulative_constraint_violations = cumulative_constraint_violations + 1
             # new c_n
             # new_c_n = env.get_constraint_values()
             episode_step += 1
@@ -215,50 +215,54 @@ def train(arglist):
             if done or terminal:
                 if done:
                     num_done = num_done + 1
+                if collision:
+                    cumulative_constraint_violations = cumulative_constraint_violations + 1
 
                 data_save.append(np.concatenate([obs_n[0], action_n[0], action_n[0]]))
                 data_save = np.array(data_save)
                 '''np.savetxt("data_save.txt", data_save)'''  # 缺省按照'%.18e'格式保存数据，以空格分隔
 
                 # plot x, y, v, theta
-                a = data_save
-                V = a[:, 1]
-                x = a[:, 2]
-                y = a[:, 3]
-                theta = a[:, 4]
-                omega = a[:, 5]
-                # action_n = a[:, 26] - a[:, 27]
-                # action_real = a[:, 31] - a[:, 32]
-                fig, ax0 = plt.subplots()
-                for i, landmark in enumerate(env.world.landmarks[:-1]):
-                    p_pos = landmark.state.p_pos
-                    a = landmark.sizea
-                    b = landmark.sizeb
-                    theta = landmark.direction / np.pi * 180
-                    ellipse = mpathes.Ellipse(p_pos, 2 * a, 2 * b, theta, facecolor='w', edgecolor='forestgreen', linestyle='-.')
-                    ax0.add_patch(ellipse)
-                for i, landmark in enumerate(env.world.landmarks):
-                    p_pos = landmark.state.p_pos
-                    theta = landmark.direction / np.pi * 180
-                    a = (landmark.sizea - 0.09) if landmark is not env.world.landmarks[-1] else landmark.sizea
-                    b = (landmark.sizeb - 0.09) if landmark is not env.world.landmarks[-1] else landmark.sizeb
-                    ellipse = mpathes.Ellipse(p_pos, 2 * a, 2 * b, theta, facecolor='forestgreen')
-                    ax0.add_patch(ellipse)
-                for i in range(len(x)):
-                    p_pos = np.array([x[i], y[i]])
-                    r = env.world.agents[0].size
-                    circle = mpathes.Circle(p_pos, r, facecolor='darkgreen')
-                    ax0.add_patch(circle)
-                ax0.set_xlim((-1, 40))
-                ax0.set_ylim((-10, 10))
-                ax0.axis('equal')
-                ax0.set_title("x-y")
-                x1 = [-1, 40]
-                y1 = [10, 10]
-                y2 = [-10, -10]
-                ax0.plot(x1, y1, color='forestgreen', linestyle='-.')
-                ax0.plot(x1, y2, color='forestgreen', linestyle='-.')
-                plt.show()
+                if collision:
+                    a = data_save
+                    V = a[:, 1]
+                    x = a[:, 2]
+                    y = a[:, 3]
+                    theta = a[:, 4]
+                    omega = a[:, 5]
+                    # action_n = a[:, 26] - a[:, 27]
+                    # action_real = a[:, 31] - a[:, 32]
+                    fig, ax0 = plt.subplots()
+                    for i, landmark in enumerate(env.world.landmarks[:-1]):
+                        p_pos = landmark.state.p_pos
+                        a = landmark.sizea
+                        b = landmark.sizeb
+                        theta = landmark.direction / np.pi * 180
+                        ellipse = mpathes.Ellipse(p_pos, 2 * a, 2 * b, theta, facecolor='w', edgecolor='forestgreen', linestyle='-.')
+                        ax0.add_patch(ellipse)
+                    for i, landmark in enumerate(env.world.landmarks):
+                        p_pos = landmark.state.p_pos
+                        theta = landmark.direction / np.pi * 180
+                        a = (landmark.sizea - 0.09) if landmark is not env.world.landmarks[-1] else landmark.sizea
+                        b = (landmark.sizeb - 0.09) if landmark is not env.world.landmarks[-1] else landmark.sizeb
+                        ellipse = mpathes.Ellipse(p_pos, 2 * a, 2 * b, theta, facecolor='forestgreen')
+                        ax0.add_patch(ellipse)
+                    for i in range(len(x)):
+                        p_pos = np.array([x[i], y[i]])
+                        r = env.world.agents[0].size
+                        circle = mpathes.Circle(p_pos, r, facecolor='darkgreen')
+                        ax0.add_patch(circle)
+                    ax0.set_xlim((-1, 40))
+                    ax0.set_ylim((-10, 10))
+                    ax0.axis('equal')
+                    ax0.set_title("x-y")
+                    x1 = [-1, 40]
+                    y1 = [10, 10]
+                    y2 = [-10, -10]
+                    ax0.plot(x1, y1, color='forestgreen', linestyle='-.')
+                    ax0.plot(x1, y2, color='forestgreen', linestyle='-.')
+                    plt.show()
+                collision = False
                 '''fig, ax = plt.subplots(ncols=2, nrows=2)
                 for i, landmark in enumerate(env.world.landmarks):
                     p_pos = landmark.state.p_pos

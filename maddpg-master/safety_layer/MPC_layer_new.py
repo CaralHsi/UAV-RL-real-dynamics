@@ -24,7 +24,8 @@ class NoFlyZone:
         self.M = 5
         self.agent_r = r
 
-    def _set(self, obs):
+    def _set(self, obs, r):
+        self.agent_r = r
         self.Flag_NFZ = np.ones(self.M)
         self.x_NFZ = np.array(np.zeros(self.M))
         self.y_NFZ = np.array(np.zeros(self.M))
@@ -35,7 +36,8 @@ class NoFlyZone:
             self.y_NFZ[i] = obs[6 + i * 5 + 1] + obs[3]
             self.a_NFZ[i] = obs[6 + i * 5 + 2] + 1.3 * self.agent_r
             self.b_NFZ[i] = obs[6 + i * 5 + 3] + 1.3 * self.agent_r
-            if self.x_NFZ[i] == -1 and self.y_NFZ[i] == -1 and self.a_NFZ[i] == -1:
+            if obs[6 + i * 5 + 0] == -1 or obs[6 + i * 5 + 1] == -1\
+                    or obs[6 + i * 5 + 2] == -1:
                 self.M = i
                 break
         self.x_NFZ = np.array(self.x_NFZ)
@@ -76,7 +78,7 @@ def optimization(UAV_config, no_fly_zone, initial_trajectory, plot_procedure=Fal
     for j in range(no_fly_zone.M):
         for i in range(np_ + 1):
             avoid_circle1[0, i, j] = no_fly_zone.x_NFZ[j] + no_fly_zone.a_NFZ[j] * np.cos(i / np_ * 2 * np.pi)
-            avoid_circle1[1, i, j] = no_fly_zone.y_NFZ[j] + no_fly_zone.a_NFZ[j] * np.sin(i / np_ * 2 * np.pi)
+            avoid_circle1[1, i, j] = no_fly_zone.y_NFZ[j] + no_fly_zone.b_NFZ[j] * np.sin(i / np_ * 2 * np.pi)
     flag = True
     iter = 1
     deta_x = 0
@@ -124,10 +126,22 @@ def optimization(UAV_config, no_fly_zone, initial_trajectory, plot_procedure=Fal
         for j in range(no_fly_zone.M):
             if no_fly_zone.Flag_NFZ[j] == 1:
                 for i in range(1, UAV_config.N + 1):
-                    af_ax = 2 * (result[0, i] - no_fly_zone.x_NFZ[j]) / np.square(no_fly_zone.a_NFZ[j])
-                    af_ay = 2 * (result[1, i] - no_fly_zone.y_NFZ[j]) / np.square(no_fly_zone.b_NFZ[j])
-                    f_xy = np.square((result[0, i] - no_fly_zone.x_NFZ[j])) / np.square(no_fly_zone.a_NFZ[j]) + (
-                                np.square(result[1, i] - no_fly_zone.y_NFZ[j])) / np.square(no_fly_zone.b_NFZ[j]) - 1
+                    x_i = result[0, i]
+                    y_i = result[1, i]
+                    thita = 0
+                    A1 = np.cos(thita)
+                    B1 = -np.sin(thita)
+                    C1 = -np.cos(thita) * no_fly_zone.x_NFZ[j] + np.sin(thita) * no_fly_zone.y_NFZ[j]
+                    A2 = np.sin(thita)
+                    B2 = np.cos(thita)
+                    C2 = -np.sin(thita) * no_fly_zone.x_NFZ[j] - np.cos(thita) * no_fly_zone.y_NFZ[j]
+                    af_ax = 2 * A1 * (A1 * x_i + B1 * y_i + C1) / np.square(no_fly_zone.a_NFZ[j]) + \
+                            2 * A2 * (A2 * x_i + B2 * y_i + C2) / np.square(no_fly_zone.b_NFZ[j])
+                    af_ay = 2 * B1 * (A1 * x_i + B1 * y_i + C1) / np.square(no_fly_zone.a_NFZ[j]) + \
+                            2 * B2 * (A2 * x_i + B2 * y_i + C2) / np.square(no_fly_zone.b_NFZ[j])
+                    f_xy = np.square(A1 * x_i + B1 * y_i + C1) / np.square(no_fly_zone.a_NFZ[j]) + \
+                           np.square(A2 * x_i + B2 * y_i + C2) / np.square(no_fly_zone.b_NFZ[j]) - 1
+
                     constraints.append(prob.add_constraint(f_xy + af_ax * (y[i * nx + 0] - result[0, i]) +
                                                            af_ay * (y[i * nx + 1] - result[1, i]) >= 0))
         constraints.append(prob.add_constraint(y[0] == UAV_config.x0))
@@ -176,11 +190,11 @@ def optimization(UAV_config, no_fly_zone, initial_trajectory, plot_procedure=Fal
             # print("x: {}, y:{}  deta1:{}   v_ba:{}".format(np.max(np.abs(x_differ)), np.max(np.abs(y_differ)),
             #                                               np.max(np.abs(deta1_differ)), np.max(np.abs(v_ba_differ))))
             if np.max(np.abs(x_differ)) <= 0.005 and np.max(np.abs(y_differ)) <= 0.005 and \
-                    np.max(np.abs(theta_differ)) <= 0.01 and np.max(np.abs(omega_differ)) <= 0.01:
+                    np.max(np.abs(theta_differ)) <= 0.005 and np.max(np.abs(omega_differ)) <= 0.005:
                 flag = 0
             else:
                 iter = iter + 1
-                if iter > 5:
+                if iter > 8:
                     break
                 result = np.squeeze(np.array([x_pos, y_pos, theta_pos, omega_pos]))
     return x_pos, y_pos, theta_pos, omega_pos, d_omega_pos
@@ -204,15 +218,15 @@ class MpcLayer:
         xf = self.env.world.landmarks[-1].state.p_pos[0]
         yf = self.env.world.landmarks[-1].state.p_pos[1]
         self.UAV_config._set(x0, y0, theta0, omega0, xf, yf)
-        self.NoFlyZone._set(obs)
+        self.NoFlyZone._set(obs, self.env.agents[0].size)
         self.initial_trajectory._set(trajectory, v, self.UAV_config.N)
         x_pos, y_pos, theta_pos, omega_pos, d_omega_pos = optimization(self.UAV_config, self.NoFlyZone,
                                                                                self.initial_trajectory)
         '''fig, ax0 = plt.subplots()
         for i, landmark in enumerate(self.env.world.landmarks):
             p_pos = landmark.state.p_pos
-            ra = landmark.sizea
-            rb = landmark.sizeb
+            ra = landmark.sizea  # + 1.3 * self.env.world.agents[0].size
+            rb = landmark.sizeb  # + 1.3 * self.env.world.agents[0].size
             direction = landmark.direction
             ellipse = mpathes.Ellipse(p_pos, 2 * ra, 2 * rb, direction, facecolor='forestgreen')
             ax0.add_patch(ellipse)
@@ -252,6 +266,10 @@ class MpcLayer:
         x_pos_ += np.cos(theta__) * 0.2
         y_pos_ += np.sin(theta__) * 0.2
 
+        if d_omega_MPC < -0.24:
+            d_omega_MPC = -0.24
+        elif d_omega_MPC > 0.24:
+            d_omega_MPC = 0.24
         d_omega = action[3] - action[4]
         delta_action = d_omega_MPC / 0.12 - d_omega
         action[3] = action[3] + delta_action / 2
@@ -264,15 +282,40 @@ class MpcLayer:
         temp = np.concatenate((p_pos_0_real, p_pos_1_real))
 
         for i, landmark in enumerate(self.env.world.landmarks[0:-1]):
-            dist = np.sqrt(np.sum(np.square(temp - landmark.state.p_pos))) -\
-                   (self.env.agents[0].size + landmark.size)
-            dist__ = np.sqrt(np.sum(np.square(np.concatenate((x_pos[1], y_pos[1]))
-                                              - landmark.state.p_pos))) -\
-                     (self.env.agents[0].size + landmark.size)
-            if i == 0:
-                dist_ = dist
-            if dist <= 0:
-                print(0, ' ', dist, dist__)
+            agent1 = landmark
+            theta = agent1.direction
+            a = agent1.sizea + self.env.agents[0].size
+            b = agent1.sizeb + self.env.agents[0].size
+            x_ = (temp[0] - agent1.state.p_pos[0]) * np.cos(theta) + \
+                 (temp[1] - agent1.state.p_pos[1]) * np.sin(theta)
+            y_ = - (temp[0] - agent1.state.p_pos[0]) * np.sin(theta) + \
+                 (temp[1] - agent1.state.p_pos[1]) * np.cos(theta)
+            dist__ = x_ ** 2 / a ** 2 + y_ ** 2 / b ** 2
+            if dist__ <= 1:
+                '''fig, ax0 = plt.subplots()
+                for i, landmark in enumerate(self.env.world.landmarks):
+                    p_pos = landmark.state.p_pos
+                    ra = landmark.sizea
+                    rb = landmark.sizeb
+                    direction = landmark.direction
+                    ellipse = mpathes.Ellipse(p_pos, 2 * ra, 2 * rb, direction, facecolor='forestgreen')
+                    ax0.add_patch(ellipse)
+                for i in range(self.UAV_config.N + 1):
+                    p_pos = np.array([self.initial_trajectory.x[i], self.initial_trajectory.y[i]])
+                    r = self.env.world.agents[0].size
+                    circle = mpathes.Circle(p_pos, r, facecolor='lightsalmon', edgecolor='orangered')
+                    ax0.add_patch(circle)
+                for i in range(self.UAV_config.N + 1):
+                    p_pos = np.array([x_pos[i], y_pos[i]])
+                    r = self.env.world.agents[0].size
+                    circle = mpathes.Circle(p_pos, r)
+                    ax0.add_patch(circle)
+
+                ax0.set_xlim((-1, 40))
+                ax0.set_ylim((-10.3, 10.3))
+                ax0.axis('equal')
+                plt.show()'''
+                print(0, ' ', dist__)
                 print(np.sqrt(np.sum(np.square(temp - np.concatenate((x_pos[1], y_pos[1]))))))
         #print("dist, p_pos_0_real, p_pos_1_real, theta_MPC, omega_MPC, d_omega_MPC: \n",
               #dist_, p_pos_0_real, p_pos_1_real, theta_MPC, omega_MPC, d_omega_MPC)
