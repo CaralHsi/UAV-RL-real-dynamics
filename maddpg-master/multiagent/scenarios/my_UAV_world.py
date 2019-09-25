@@ -237,7 +237,7 @@ class Scenario(BaseScenario):
             for a in world.landmarks[0:-1]:
                 if self.is_collision(a, agent):
                     rew -= 7
-        rew -= agent.action.u[1] * 10
+        rew -= agent.action.u[1] * 20
         rew /= world.landmarks[-1].state.p_pos[0]
         return rew
 
