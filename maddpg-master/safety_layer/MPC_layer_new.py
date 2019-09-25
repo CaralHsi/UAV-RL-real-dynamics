@@ -112,6 +112,8 @@ def optimization(UAV_config, no_fly_zone, initial_trajectory, plot_procedure=Fal
         for i in range(UAV_config.N):
             constraints.append(prob.add_constraint(y[(UAV_config.N + 1) * nx + i * nu + 0] >= -0.24))
             constraints.append(prob.add_constraint(y[(UAV_config.N + 1) * nx + i * nu + 0] <= 0.24))
+            constraints.append(prob.add_constraint(y[i * nx + 3] >= -0.24))
+            constraints.append(prob.add_constraint(y[i * nx + 3] <= 0.24))
             constraints.append(prob.add_constraint(y[i * nx + 0] - result[0, i] == y1[i]))
             constraints.append(prob.add_constraint(y[i * nx + 1] - result[1, i] == y2[i]))
             if iter >= 2:
@@ -266,10 +268,11 @@ class MpcLayer:
         x_pos_ += np.cos(theta__) * 0.2
         y_pos_ += np.sin(theta__) * 0.2
 
-        if d_omega_MPC < -0.24:
-            d_omega_MPC = -0.24
-        elif d_omega_MPC > 0.24:
-            d_omega_MPC = 0.24
+        if omega__ < -0.24:
+            omega__ = -0.24
+        elif omega__ > 0.24:
+            omega__ = 0.24
+        d_omega_MPC = omega__ - omega_
         d_omega = action[3] - action[4]
         delta_action = d_omega_MPC / 0.12 - d_omega
         action[3] = action[3] + delta_action / 2
@@ -315,8 +318,8 @@ class MpcLayer:
                 ax0.set_ylim((-10.3, 10.3))
                 ax0.axis('equal')
                 plt.show()'''
-                print(0, ' ', dist__)
-                print(np.sqrt(np.sum(np.square(temp - np.concatenate((x_pos[1], y_pos[1]))))))
+                # print(0, ' ', dist__)
+                # print(np.sqrt(np.sum(np.square(temp - np.concatenate((x_pos[1], y_pos[1]))))))
         #print("dist, p_pos_0_real, p_pos_1_real, theta_MPC, omega_MPC, d_omega_MPC: \n",
               #dist_, p_pos_0_real, p_pos_1_real, theta_MPC, omega_MPC, d_omega_MPC)
 
